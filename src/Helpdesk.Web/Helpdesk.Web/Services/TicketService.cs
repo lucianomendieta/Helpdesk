@@ -17,6 +17,7 @@ public interface ITicketService
     Task<ResultadoApi> AssignTicketAsync(int ticketId, AsignarTicketDto dto);
     Task<bool> ChangeTicketPriorityAsync(int ticketId, ActualizarPrioridadTicketDto dto);
     Task<TicketsStatsDto?> GetTicketsStatsAsync();
+    Task<TicketDto[]?> GetTicketsRecientesAsync();
 }
 
 public class TicketService(HttpClient http) : ITicketService
@@ -111,6 +112,19 @@ public class TicketService(HttpClient http) : ITicketService
         try
         {
             return await http.GetFromJsonAsync<TicketsStatsDto?>("tickets/stats", JsonConfig.Options);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    //Obtengo los 5 ultimos tickets del usuario logueado --- Ver endpoint
+    public async Task<TicketDto[]?> GetTicketsRecientesAsync()
+    {
+        try
+        {
+            return await http.GetFromJsonAsync<TicketDto[]?> ("tickets/recents", JsonConfig.Options);
         }
         catch
         {

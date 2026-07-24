@@ -21,6 +21,7 @@ public static class TicketEndpoints
         group.MapGet("/", GetTickets);
         group.MapGet("/{id}", GetTicketId);
         group.MapGet("/stats", GetStats);
+        group.MapGet("/recents", GetRecents);
         //Posts
         group.MapPost("/", PostTicket);
         //Puts
@@ -55,10 +56,10 @@ public static class TicketEndpoints
         query = FiltrarPorRol(query, rol, usuarioInt);
 
         return Results.Ok(await query.Select(t => new TicketResponseDto(
-                                                        t.Id, 
-                                                        t.Titulo, 
-                                                        t.Descripcion, 
-                                                        t.FechaCreacion, 
+                                                        t.Id,
+                                                        t.Titulo,
+                                                        t.Descripcion,
+                                                        t.FechaCreacion,
                                                         t.Estado,
                                                         t.Usuario.NombrePila + " " + t.Usuario.ApellidoPila,
                                                         t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
@@ -75,7 +76,7 @@ public static class TicketEndpoints
             .Select(t => new TicketResponseDto(
                 t.Id,
                 t.Titulo,
-                t.Descripcion, 
+                t.Descripcion,
                 t.FechaCreacion,
                 t.Estado,
                 t.Usuario.NombrePila + " " + t.Usuario.ApellidoPila,
@@ -100,7 +101,7 @@ public static class TicketEndpoints
         if (rol == "Cliente" && ticket.UsuarioCreo != usuarioInt)
         {
             return Results.Forbid();
-        } 
+        }
         //Si es agente o analista y el ticket no es el que tiene asignado, forbid
         else if ((rol == "Agente" || rol == "Analista") && ticket.AgenteAsignadoId != usuarioInt)
         {
@@ -114,13 +115,13 @@ public static class TicketEndpoints
     private static async Task<IResult> PostTicket(CrearTicketDto dto, HelpdeskDbContext contexto, HttpContext http)
     {
         var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        
+
         if (usuario is null)
         {
             return Results.Unauthorized();
         }
-        
-        
+
+
         Ticket nuevo = new Ticket
         {
             UsuarioCreo = int.Parse(usuario),
@@ -153,7 +154,7 @@ public static class TicketEndpoints
         var ticket = await contexto.Tickets.FindAsync(id);
         var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
         var rol = http.User.FindFirstValue(ClaimTypes.Role);
-        
+
         if (ticket is null)
         {
             return Results.NotFound();
@@ -162,7 +163,7 @@ public static class TicketEndpoints
         {
             return Results.Unauthorized();
         }
-        
+
         var usuarioInt = int.Parse(usuario); //Parse para el id usuario
 
         //Si no puede editar, forbid
@@ -303,7 +304,7 @@ public static class TicketEndpoints
     //Obtengo el query de ticket
     private static IQueryable<Ticket> FiltrarPorRol(IQueryable<Ticket> query, string? rol, int usuarioId)
     {
-        
+
         //Si es cliente, solo ve sus propios tickets, si es agente/analista, solo los que se les asigno. Admin y Gerencia ve todos.
         if (rol == "Cliente")
         {
@@ -357,5 +358,35 @@ public static class TicketEndpoints
             ));
     }
 
-    
+    private static async Task<IResult> GetRecents(ClaimsPrincipal user, HelpdeskDbContext contexto)
+    {
+        //Obtengo informacion del usuario con los claims
+        var rol = user.FindFirstValue(ClaimTypes.Role);
+        var usuario = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = contexto.Tickets.AsQueryable();
+
+        if (usuario is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var usuarioInt = int.Parse(usuario);
+
+        //Armo el query
+        var filtrados = await FiltrarPorRol(query, rol, usuarioInt)
+            .OrderByDescending(t => t.FechaCreacion) //Los mas recientes
+            .Take(5) //Solo 5
+            .Select(t => new TicketResponseDto(
+                    t.Id,
+                    t.Titulo,
+                    t.Descripcion,
+                    t.FechaCreacion,
+                    t.Estado,
+                    t.Usuario.NombrePila + " " + t.Usuario.ApellidoPila,
+                    t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
+                    t.UsuarioCreo,
+                    t.AgenteAsignadoId,
+                    t.Prioridad)).ToListAsync(); //Devuelvo el response en el formato conocido
+        return Results.Ok(filtrados);
+    }
 }

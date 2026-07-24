@@ -102,22 +102,67 @@ else
             </Authorized>
         </AuthorizeView>
 
+        
+            <MudGrid>
+                @if (ticketsRecientes is null)
+                {
+                    <MudAlert Severity="Severity.Error"> No se pudieron cargar los tickets recientes</MudAlert>
+                }
+                else if (ticketsRecientes.Length == 0)
+                {
+                    <MudText> No tenes tickets todavia!</MudText>
+                }
+                else
+                {
+                    <MudItem xs="12" md="8">
+                        <MudTable T=TicketDto Items="ticketsRecientes"
+                                  Hover="true"
+                                  OnRowClick="@(fila => navigation.NavigateTo($"tickets/{fila.Item!.Id}"))"
+                        >
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">Tickets recientes</MudText>
+                            <MudSpacer />
+                            <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                                <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="CrearTicketAsync">
+                                    Nuevo Ticket
+                                </MudButton>
+                            </AuthorizeView>
+                        </ToolBarContent>    
+                        <HeaderContent>
+                                <MudTh>Titulo</MudTh>
+                                <MudTh>Estado</MudTh>
+                                <MudTh>Fecha</MudTh>
+                                <MudTh>Agente Asignado</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
+                                <MudTd DataLabel="Estado"><MudChip T="string" Color="@context.Estado.GetColor()">@context.Estado</MudChip></MudTd>
+                                <MudTd DataLabel="Fecha">@context.FechaCreacion.ToString("dd MMM")</MudTd>
+                                <MudTd DataLabel="NombreAgente">@(context.NombreAgente ?? "Sin Asignar")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudItem>
+        }
 
-        @*Grafico Donut*@
-        <MudPaper Class="pa-4" Style="max-width:350px">
-            <MudText>
-                Distribucion por estado
-            </MudText>
-            @*Si no hay datos del donut, no se muestra nada*@
-            @if (donutData.Length == 0)
-            {
-                <MudText>Sin tickets para mostrar</MudText>
-            }
-            else
-            {
-                <MudChart T="double" ChartType="ChartType.Donut" ChartSeries="donutSeries" ChartLabels="donutLabels"> </MudChart>
-            }
-        </MudPaper>
+            <MudItem xs="12" md="4">
+                    @*Grafico Donut*@
+                    <MudPaper Class="pa-4" Style="max-width:350px">
+                        <MudText>
+                            Distribucion por estado
+                        </MudText>
+                        @*Si no hay datos del donut, no se muestra nada*@
+                        @if (donutData.Length == 0)
+                        {
+                            <MudText>Sin tickets para mostrar</MudText>
+                        }
+                        else
+                        {
+                            <MudChart T="double" ChartType="ChartType.Donut" ChartSeries="donutSeries" ChartLabels="donutLabels"> </MudChart>
+                        }
+                    </MudPaper>
+            </MudItem>
+            
+        </MudGrid>
 
     </MudContainer>
     
@@ -133,10 +178,12 @@ else
     private double[] donutData = [];
     private string[] donutLabels = [];
     private List<ChartSeries<double>> donutSeries = [];
+    private TicketDto[]? ticketsRecientes;
 
     protected override async Task OnInitializedAsync()
     {
         stats = await ticketService.GetTicketsStatsAsync();
+        ticketsRecientes = await ticketService.GetTicketsRecientesAsync();
         if (stats is null)
         {
             snackbar.Add("No se pudo obtener tus tickets, contacte a soporte.", Severity.Error);
