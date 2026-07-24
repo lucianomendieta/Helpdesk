@@ -145,6 +145,7 @@ else
         }
 
             <MudItem xs="12" md="4">
+                <MudStack>
                     @*Grafico Donut*@
                     <MudPaper Class="pa-4" Style="max-width:350px">
                         <MudText>
@@ -160,6 +161,37 @@ else
                             <MudChart T="double" ChartType="ChartType.Donut" ChartSeries="donutSeries" ChartLabels="donutLabels"> </MudChart>
                         }
                     </MudPaper>
+                    @*accesos rapidos*@
+                    <MudPaper Class="pa-4">
+                        <MudText> Accesos Rapidos </MudText>
+                        <MudStack>
+                            @*Solo para cliente*@
+                            <AuthorizeView Roles="Cliente">
+                                <Authorized>
+                                    <MudButton OnClick="CrearTicketAsync" StartIcon="@Icons.Material.Filled.Add">Crear Ticket</MudButton>
+                                    <MudButton Href="/tickets" StartIcon="@Icons.Material.Filled.Assignment">Mis Tickets</MudButton>
+                                </Authorized>
+                            </AuthorizeView>
+
+                            @*Solo para agentes*@
+                            <AuthorizeView Roles="Agente,Analista">
+                                <Authorized>
+                                    <MudButton Href="/tickets" StartIcon="@Icons.Material.Filled.PersonSearch">Ver mis tickets</MudButton>
+                                </Authorized>
+                            </AuthorizeView>
+
+                            @*Solo para Administradores*@
+                            <AuthorizeView Roles="Administrador,Gerente">
+                                <Authorized>
+                                    <MudButton OnClick="CrearTicketAsync" StartIcon="@Icons.Material.Filled.Add">Crear Ticket</MudButton>
+                                    <MudButton Href="/tickets?asignacion=sinasignar" StartIcon="@Icons.Material.Filled.PersonOff">Tickets sin asignar</MudButton>
+                                    <MudButton Href="/usuarios" StartIcon="@Icons.Material.Filled.People">Gestionar Usuarios</MudButton>
+                                </Authorized>
+                            </AuthorizeView>
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>    
+                
             </MudItem>
             
         </MudGrid>
@@ -310,4 +342,6 @@ else
             return "Todos los tickets tienen asignacion!";
         }
     }
+
+
 }

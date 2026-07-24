@@ -163,10 +163,24 @@ else @*VISTA DE CARDS/TARJETAS*@
     private EstadoTicket? estadoTicket;
     private int? agenteId;
 
+    //Seteo el parametro y enum para parametrizar el endpoint de tickets
+    [Parameter, SupplyParameterFromQuery] public string? Asignacion { get; set; }
+    private FiltroAsignacion filtroAsignacion = FiltroAsignacion.Todos;
+
+    private enum FiltroAsignacion
+    {
+        Todos,
+        SinAsignar
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
         tickets = await ticketService.GetTicketsAsync();
+        if(string.Equals(Asignacion, "sinasignar", StringComparison.OrdinalIgnoreCase)) //Si la asignacion es sin asignar se agrega al filtro
+        {
+            filtroAsignacion = FiltroAsignacion.SinAsignar;
+        }
         var guardada = await storage.GetItemAsync("vistaTickets");
         if (!string.IsNullOrEmpty(guardada) && Enum.TryParse<VistasTickets>(guardada, out var v))
         {
@@ -258,7 +272,8 @@ else @*VISTA DE CARDS/TARJETAS*@
         (tickets ?? [])
             .Where(t => string.IsNullOrWhiteSpace(busqueda) || t.Titulo.Contains(busqueda!, StringComparison.OrdinalIgnoreCase))
             .Where(t => estadoTicket is null || t.Estado == estadoTicket)
-            .Where(t => agenteId is null || t.AgenteAsignadoId == agenteId);
+            .Where(t => agenteId is null || t.AgenteAsignadoId == agenteId)
+            .Where(t => filtroAsignacion == FiltroAsignacion.Todos || t.AgenteAsignadoId is null);
 
 
     //Propiedad para agentes ya asignados
