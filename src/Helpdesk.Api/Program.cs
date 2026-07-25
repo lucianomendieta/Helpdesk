@@ -9,6 +9,7 @@ using System.Security.Claims;
 using Helpdesk.Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
+using Helpdesk.Api.Almacenamiento;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -44,6 +45,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+//agrego el servicio de Almacenamiento en disco
+builder.Services.AddSingleton<IAlmacenamientoAdjuntos, AlmacenamientoDisco>();
 
 //verifico si esta configurado el setting
 var originString = builder.Configuration["Cors:AllowedOrigin"];
