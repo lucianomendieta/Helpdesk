@@ -52,6 +52,8 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ITicketDetalleService, TicketDetalleService>();
 //Servicio de usuarios
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+//Servicio de adjuntos
+builder.Services.AddScoped<IAdjuntoService, AdjuntoService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
