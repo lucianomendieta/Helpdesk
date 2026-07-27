@@ -3,10 +3,11 @@
 @using Helpdesk.Web.Models;
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ITicketService TicketService;
+@inject IAdjuntoService adjuntoService;
 @inject MudBlazor.ISnackbar snackbar;
 
 
-<MudDialog>
+<MudDialog Class="pa-4">
     <TitleContent>
         Nuevo Ticket
     </TitleContent>
@@ -24,12 +25,33 @@
                     }
                 </MudSelect>
             </AuthorizeView>
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5*1024*1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
+                <CustomContent>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AttachFile"
+                               OnClick="@(() => context.OpenFilePickerAsync())">
+                        Adjuntar imagenes
+                    </MudButton>
+                </CustomContent>
+                <SelectedTemplate>
+                    @if (context is not null)
+                    {
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Style="row-gap:4">
+                            @foreach (var archivo in context)
+                            {
+                                <MudChip T="string" OnClose="@(async () => await fileUpload.RemoveFileAsync(archivo))">@archivo.Name</MudChip>
+                            }
+                        </MudStack>
+                    }
+                </SelectedTemplate>
+            </MudFileUpload>
         </MudForm>
     </DialogContent>
         
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary">Crear</MudButton>
+        <MudButton OnClick="Cancel" Disabled="enviando">Cancelar</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando">Crear</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -37,6 +59,9 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
+    private MudFileUpload<IReadOnlyList<IBrowserFile>> fileUpload = default!;
+    private IReadOnlyList<IBrowserFile>? archivos;
+    private bool enviando;
     private MudForm form;
     private bool IsValid;
     private CrearTicketDto dto = new();
@@ -46,18 +71,43 @@
     private async Task Submit()
     {
         await form.ValidateAsync();
-        if (IsValid)
+        if (!IsValid) return;
+
+        enviando = true;
+        try
         {
             ResultadoApi<TicketDto> created = await TicketService.CreateTicketAsync(dto);
             if (!created.Exito)
             {
                 snackbar.Add(created.Error ?? "Se ha producido un error, intente de nuevo", Severity.Error);
-            } 
-            else
-            {
-                MudDialog.Close(DialogResult.Ok(created.Data));
-                snackbar.Add("Ticket creado!", Severity.Info);
+                return;
             }
+            if (created.Data is not TicketDto nuevo) return;
+
+            int fallidos = 0;
+            if (archivos is not null)
+            {
+                foreach (var archivo in archivos)
+                {
+                    var subido = await adjuntoService.SubirAdjuntoAsync(nuevo.Id, archivo);
+                    if (subido is null) { fallidos++; }
+                }
+                if (fallidos > 0)
+                {
+                    snackbar.Add($"No se pudieron adjuntar {fallidos} archivo(s)", Severity.Warning);
+                }
+                else
+                {
+                    MudDialog.Close(DialogResult.Ok(nuevo));
+                    snackbar.Add("Ticket creado!", Severity.Info);
+                }
+            }
+
         }
+        finally
+        {
+            enviando = false;
+        }
+
     }
 }

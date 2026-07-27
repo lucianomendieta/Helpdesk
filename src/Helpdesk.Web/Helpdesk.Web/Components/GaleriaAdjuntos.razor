@@ -1,0 +1,135 @@
+﻿@using Helpdesk.Web.Models;
+@inject IAdjuntoService adjuntoService;
+@inject AdjuntoInterop adjuntoInterop;
+@inject ISnackbar snackbar;
+@inject IDialogService dialogService;
+
+@implements IAsyncDisposable 
+
+
+@if (error)
+{
+    <MudAlert Severity="Severity.Error">No se pudieron cargar las imagenes</MudAlert>
+}
+else if (adjuntos is null)
+{
+    <MudProgressLinear Indeterminate="true"/>
+}
+else if (adjuntos.Length == 0)
+{
+    <MudText>Aqui no hay adjuntos, ingresa una evidencia para tu ticket!</MudText>
+}
+else
+{
+    <MudStack Row="true" Wrap="Wrap.Wrap">
+        <MudFileUpload T="IBrowserFile"
+                       FilesChanged="UploadAsync"
+                       Accept=".jpg,.jpeg,.png,.webp"
+                       MaxFileSize="@(5 * 1024 * 1024)"
+                       @ref="fileUpload"> 
+            
+            <CustomContent>
+                <MudPaper Outlined="true" Style="border-style: dashed; cursor: pointer;" @onclick="@(() => context.OpenFilePickerAsync())">
+                    <MudIcon Icon="@Icons.Material.Filled.Image" />
+                    <MudText>Adjuntar imagen</MudText>
+                </MudPaper>
+            </CustomContent>
+                   
+        </MudFileUpload>
+
+        
+        
+
+        @foreach (var adjunto in adjuntos)
+        {
+            @if (urls.TryGetValue(adjunto.Id, out var url))
+            {
+                <MudImage Src="@url" 
+                    Alt="@adjunto.NombreOriginal" 
+                    Height="100" 
+                    ObjectFit="ObjectFit.Cover" 
+                    Class="rounded" 
+                    @onclick="@(() => AbrirPreviaAsync(url, adjunto.NombreOriginal))"
+                    Style="cursor: pointer;"/>
+            }
+        }
+    </MudStack>
+}
+
+
+@code {
+    [Parameter] public int TicketId { get; set; }
+    private AdjuntoResponseDto[]? adjuntos;
+    private bool error;
+    private readonly Dictionary<int, string> urls = new();
+    private MudFileUpload<IBrowserFile> fileUpload = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Listo los adjuntos, si es null tiro error
+        adjuntos = await adjuntoService.ListarAdjuntosAsync(TicketId);
+        if (adjuntos is null)
+        { 
+            error = true;
+            return;
+        }
+        //Filtro que sean imagenes
+        adjuntos = adjuntos.Where(a => a.Tipo == TipoAdjunto.Imagen).ToArray();
+        //Para cada adjunto muestro su contenido y creo la url
+        foreach (var adjunto in adjuntos)
+        {
+            await CargarUrlAsync(adjunto);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        foreach ( var url in urls.Values)
+        {
+            await adjuntoInterop.RevokeUrl(url);
+        }
+        urls.Clear();
+    }
+
+    private async Task AbrirPreviaAsync(string url, string nombre)
+    {
+        //Paso los parametros al modal
+        DialogParameters<VistaPreviaDialog> parameters = new()
+        {
+            {x => x.Url, url},
+            { x => x.NombreArchivo, nombre }
+        };
+        //Le paso las opciones
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+
+        await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa de imagen", parameters, options);
+    }
+
+    //Upload desde la galeria
+    private async Task UploadAsync(IBrowserFile archivo)
+    {
+        var creado = await adjuntoService.SubirAdjuntoAsync(TicketId, archivo);
+        await fileUpload.ClearAsync();
+        if (creado is null)
+        {
+            snackbar.Add("No se pudo subir el archivo, verifique", Severity.Error);
+            return;
+        }
+        if (adjuntos is null) return;
+        adjuntos = adjuntos.Append(creado).ToArray();
+        await CargarUrlAsync(creado);
+        
+    }
+
+    //Metodo para generar las urls en base al adjunto
+    private async Task CargarUrlAsync(AdjuntoResponseDto adjunto)
+    {
+        var stream = await adjuntoService.MostrarAdjuntoAsync(TicketId, adjunto.Id);
+        if (stream is not null)
+        {
+            var url = await adjuntoInterop.CreateUrl(stream, adjunto.ContentType);
+            urls[adjunto.Id] = url;
+        }
+    }
+}

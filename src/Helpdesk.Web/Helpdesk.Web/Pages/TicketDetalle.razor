@@ -52,6 +52,11 @@ else
                 <MudText Typo="Typo.overline" Color="Color.Secondary">Descripcion</MudText>
                 <MudText Typo="Typo.h4">@ticket?.Descripcion</MudText>
             </MudPaper>
+            <MudStack>
+                <MudText Typo="Typo.h5" Color="Color.Secondary">Imagenes Adjuntas</MudText>
+                <GaleriaAdjuntos TicketId="Id" />
+            </MudStack>
+            
             <MudText Typo="Typo.h6" Class="mt-4">Historial</MudText>
             @if (ticketDetalles is null)
             {

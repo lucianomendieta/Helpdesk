@@ -1,0 +1,20 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudImage Src="@Url" Alt="@NombreArchivo" Fluid="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Href="@Url" StartIcon="@Icons.Material.Filled.Download" download="@NombreArchivo">Descargar</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Close" OnClick="@( () => mudDialog.Close())">Cerrar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private IMudDialogInstance mudDialog { get; set; } = default!;
+
+    [Parameter] public string Url { get; set; } = string.Empty;
+    [Parameter] public string NombreArchivo { get; set; } = string.Empty;
+
+    
+    
+}

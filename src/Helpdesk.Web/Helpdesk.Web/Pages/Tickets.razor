@@ -190,7 +190,7 @@ else @*VISTA DE CARDS/TARJETAS*@
 
     private async Task OpenDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Medium, FullWidth=true };
 
         var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", options);
 
