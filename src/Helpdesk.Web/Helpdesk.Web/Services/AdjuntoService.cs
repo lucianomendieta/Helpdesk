@@ -17,7 +17,7 @@ public interface IAdjuntoService
 public class AdjuntoService (HttpClient http) : IAdjuntoService
 {
     //Limites constantes
-    private const long MaxSize = 5 * 1024 * 1024; //5MB
+    private const long MaxSize = 10 * 1024 * 1024; //10MB
     private const int MaxFilesPerTicket = 7; // 7 archivos por ticket
 
 
@@ -39,7 +39,7 @@ public class AdjuntoService (HttpClient http) : IAdjuntoService
     {
         //Instancio el container
         using MultipartFormDataContent multipart = new();
-        //armo el stream y seteo el maximo de megas a 5
+        //armo el stream y seteo el maximo de megas a 10
         var contenido = new StreamContent(archivo.OpenReadStream(MaxSize));
         //seteo el tipo de contenido al que mande mi archivo
         contenido.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);

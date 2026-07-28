@@ -1,0 +1,39 @@
+﻿@using Helpdesk.Web.Models;
+@inject IAdjuntoService adjuntoService;
+@inject AdjuntoInterop adjuntoInterop;
+@inject ISnackbar snackbar;
+@inject IDialogService dialogService;
+
+
+
+
+@code {
+    [Parameter] public int TicketId { get; set; }
+    private AdjuntoResponseDto[]? documentos;
+    private bool error;
+    private MudFileUpload<IBrowserFile> fileUpload = default!;
+
+    //Inicializo los documentos al llegar al form
+    protected override async Task OnInitializedAsync()
+    {
+        documentos = await adjuntoService.ListarAdjuntosAsync(TicketId);
+        if (documentos is null)
+        {
+            error = true;
+            return;
+        }
+
+        //Filtro para que sean documentos
+        documentos = documentos.Where(d => d.Tipo == TipoAdjunto.Documento).ToArray();
+    }
+
+    //Descargar los archivos
+    private async Task DescargarAsync(AdjuntoResponseDto doc)
+    {
+        var stream = adjuntoService.MostrarAdjuntoAsync(TicketId, doc.Id);
+        if (stream is null)
+        {
+            
+        }
+    }
+}

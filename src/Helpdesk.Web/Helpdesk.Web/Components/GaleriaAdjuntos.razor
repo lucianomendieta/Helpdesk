@@ -15,10 +15,6 @@ else if (adjuntos is null)
 {
     <MudProgressLinear Indeterminate="true"/>
 }
-else if (adjuntos.Length == 0)
-{
-    <MudText>Aqui no hay adjuntos, ingresa una evidencia para tu ticket!</MudText>
-}
 else
 {
     <MudStack Row="true" Wrap="Wrap.Wrap">
@@ -37,7 +33,10 @@ else
                    
         </MudFileUpload>
 
-        
+        @if (adjuntos.Length == 0)
+        {
+        <MudText>Aqui no hay adjuntos, ingresa una evidencia para tu ticket!</MudText>
+        }
         
 
         @foreach (var adjunto in adjuntos)
