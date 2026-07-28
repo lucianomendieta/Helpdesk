@@ -38,9 +38,12 @@ public static class AdjuntoEndpoints
         { ".jpeg", (TipoAdjunto.Imagen, "image/jpeg" ) },
         { ".jpg", (TipoAdjunto.Imagen, "image/jpeg" ) },
         { ".png", (TipoAdjunto.Imagen, "image/png" ) },
-        { ".webp", (TipoAdjunto.Imagen, "image/webp" ) }
+        { ".webp", (TipoAdjunto.Imagen, "image/webp" ) },
+        {  ".pdf", (TipoAdjunto.Documento, "application/pdf")  }
     };
 
+    //Armo el diccionario para cantidad de documentos
+    
 
     //Firmas de archivos
     private static readonly byte[] FirmaPng = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
