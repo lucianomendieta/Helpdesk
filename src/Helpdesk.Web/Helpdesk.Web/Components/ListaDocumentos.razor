@@ -144,9 +144,23 @@ else
 
         //armo los parametros para el dialog
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth=true};
-        var dialog = await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa", parameters, options);
+        var dialog = await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa del documento", parameters, options);
 
-        await dialog.Result;
+        var resultado = await dialog.Result;
+
+        //Si el usuario pidio borrar
+        if (resultado?.Data is true)
+        {
+            var eliminado = await adjuntoService.BorrarAdjuntoAsync(TicketId, doc.Id);
+            if (eliminado)
+            {
+                documentos = documentos!.Where(d => d.Id != doc.Id).ToArray();
+            }
+            else
+            {
+                snackbar.Add("No se pudo eliminar, verifica tus permisos.", Severity.Error);
+            }
+        }
 
         await adjuntoInterop.RevokeUrl(url);
     }

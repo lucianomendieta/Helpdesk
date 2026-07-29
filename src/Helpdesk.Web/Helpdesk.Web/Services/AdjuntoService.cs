@@ -1,10 +1,13 @@
-﻿using System.Net.Http.Headers;
+﻿using System.ComponentModel;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 using Helpdesk.Web.Dtos;
 using Helpdesk.Web.Json;
 
 using Microsoft.AspNetCore.Components.Forms;
+
+using MudBlazor;
 
 namespace Helpdesk.Web.Services;
 
@@ -13,6 +16,7 @@ public interface IAdjuntoService
     Task<AdjuntoResponseDto[]?> ListarAdjuntosAsync(int ticketId);
     Task<AdjuntoResponseDto?> SubirAdjuntoAsync(int ticketId, IBrowserFile archivo );
     Task<Stream?> MostrarAdjuntoAsync(int ticketId, int adjuntoId);
+    Task<bool> BorrarAdjuntoAsync(int ticketId, int adjuntoId);
 }
 public class AdjuntoService (HttpClient http) : IAdjuntoService
 {
@@ -70,6 +74,21 @@ public class AdjuntoService (HttpClient http) : IAdjuntoService
         {
             Console.WriteLine(ex);
             return null;
+        }
+    }
+
+    //Borro el archivo
+    public async Task<bool> BorrarAdjuntoAsync(int ticketId, int adjuntoId)
+    {
+        try
+        {
+            var response = await http.DeleteAsync($"tickets/{ticketId}/adjuntos/{adjuntoId}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return false;
         }
     }
 }

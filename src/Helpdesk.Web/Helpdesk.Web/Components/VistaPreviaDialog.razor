@@ -1,4 +1,6 @@
-﻿<MudDialog>
+﻿@inject IDialogService dialogService;
+
+<MudDialog>
     <DialogContent>
         @if (Tipo == TipoAdjunto.Imagen)
         {
@@ -10,6 +12,7 @@
         }
     </DialogContent>
     <DialogActions>
+        <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="EliminarAsync">Eliminar</MudButton>
         <MudButton Href="@Url" StartIcon="@Icons.Material.Filled.Download" download="@NombreArchivo">Descargar</MudButton>
         <MudButton StartIcon="@Icons.Material.Filled.Close" OnClick="@( () => mudDialog.Close())">Cerrar</MudButton>
     </DialogActions>
@@ -23,5 +26,15 @@
     [Parameter] public string NombreArchivo { get; set; } = string.Empty;
     [Parameter] public TipoAdjunto Tipo { get; set; }
 
-    
+    private async Task EliminarAsync()
+    {
+        var confirmado = await dialogService.ShowMessageBoxAsync(
+            title: "Eliminar?",
+            message: $"Eliminaras {NombreArchivo}, esta accion no se puede deshacer",
+            yesText: "Borrar",
+            noText: "Cancelar");
+
+        if (confirmado != true) { return; }
+        mudDialog.Close(DialogResult.Ok(true));
+    }
 }

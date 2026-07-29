@@ -4,10 +4,12 @@ using System.Security.Claims;
 using Helpdesk.Api.Almacenamiento;
 using Helpdesk.Api.Authorization;
 using Helpdesk.Api.Data;
-using Helpdesk.Api.Models;
 using Helpdesk.Api.Dtos;
+using Helpdesk.Api.Models;
 
 using Microsoft.EntityFrameworkCore;
+
+using static System.Net.WebRequestMethods;
 
 
 namespace Helpdesk.Api.Endpoints;
@@ -23,6 +25,7 @@ public static class AdjuntoEndpoints
         group.MapPost("/", PostAdjunto).DisableAntiforgery();
         group.MapGet("/", GetAdjuntos);
         group.MapGet("{adjuntoId}/contenido", GetContenido);
+        group.MapDelete("{adjuntoId}", DeleteAdjunto);
 
         return app;
     }
@@ -241,6 +244,59 @@ public static class AdjuntoEndpoints
         //Devuelvo el archivo con el overload de stream
         return Results.File(stream, adjunto.ContentType, fileDownloadName: nombre);
     }
+
+
+    //Borro un archivo almacenado en bd
+    private static async Task<IResult> DeleteAdjunto(int adjuntoId, int ticketId, HelpdeskDbContext contexto, HttpContext http, IAlmacenamientoAdjuntos almacenamiento)
+    {
+        //Valido los permisos del usuario logueado
+        #region Validacion de permisos
+        //Leo los roles
+        var rol = http.User.FindFirstValue(ClaimTypes.Role);
+
+        //Existe el ticket? Si no, 404
+        var ticket = await contexto.Tickets.FindAsync(ticketId);
+        if (ticket == null) { return Results.NotFound(); }
+
+        //Si el usuario no se pudo leer, 401
+        var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuario == null) { return Results.Unauthorized(); }
+
+        var usuarioInt = int.Parse(usuario);
+
+        //Si el usuario no es participante, esta prohibido que suba archivos
+        if (!TicketPermisos.EsParticipante(ticket, rol, usuarioInt)) { return Results.Forbid(); }
+        #endregion
+
+        //Busco el adjunto, con doble codicion para el IDOR
+        var adjunto = await contexto.TicketAdjuntos
+           .Where(a => a.Id == adjuntoId && a.TicketId == ticketId)
+           .FirstOrDefaultAsync();
+
+        if (adjunto == null) { return Results.NotFound(); }
+
+        //Solo quien subio el adjunto o un admin o gerente, si no, prohibido
+        var puedeBorrar = (adjunto.SubidoPorId == usuarioInt) || rol == "Administrador" || rol == "Gerente";
+        if (!puedeBorrar) { return Results.Forbid(); }
+
+        //Primero borro el guardado en bd, si falla no se toca el disco
+        contexto.TicketAdjuntos.Remove(adjunto);
+        await contexto.SaveChangesAsync();
+
+        //Borrado en disco
+        try
+        {
+            await almacenamiento.BorrarArchivoAsync(adjunto.NombreAlmacenado);
+        }
+        catch (Exception ex)
+        {
+            //Mensaje para log, para el usuario igual sale exitoso
+            Console.WriteLine($"El archivo {adjunto.NombreAlmacenado} no se pudo borrar: " + ex.ToString());
+        }
+        return Results.NoContent();
+    }
+
+
 
 
     //Valido si la firma del archivo coincide con su extension

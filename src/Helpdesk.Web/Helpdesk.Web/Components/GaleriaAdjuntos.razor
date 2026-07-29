@@ -53,7 +53,7 @@ else
                     Width="100"
                     ObjectFit="ObjectFit.Cover" 
                     Class="rounded" 
-                    @onclick="@(() => AbrirPreviaAsync(url, adjunto.NombreOriginal, TipoAdjunto.Imagen))"
+                    @onclick="@(() => AbrirPreviaAsync(url, adjunto))"
                     Style="cursor: pointer;"/>
             }
         }
@@ -96,19 +96,35 @@ else
         urls.Clear();
     }
 
-    private async Task AbrirPreviaAsync(string url, string nombre, TipoAdjunto tipo)
+    private async Task AbrirPreviaAsync(string url, AdjuntoResponseDto adjunto)
     {
         //Paso los parametros al modal
         DialogParameters<VistaPreviaDialog> parameters = new()
         {
             {x => x.Url, url},
-            { x => x.NombreArchivo, nombre },
-            { x => x.Tipo, tipo}
+            { x => x.NombreArchivo, adjunto.NombreOriginal },
+            { x => x.Tipo, adjunto.Tipo}
         };
         //Le paso las opciones
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
 
-        await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa de imagen", parameters, options);
+        var dialog = await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa de imagen", parameters, options);
+
+        var resultado = await dialog.Result;
+        if (resultado?.Data is true)
+        {
+            var eliminado = await adjuntoService.BorrarAdjuntoAsync(TicketId, adjunto.Id);
+            if (eliminado)
+            {
+                await adjuntoInterop.RevokeUrl(url);
+                urls.Remove(adjunto.Id);
+                adjuntos = adjuntos!.Where(a => a.Id != adjunto.Id).ToArray();
+            }
+            else
+            {
+                snackbar.Add("No se pudo eliminar la imagen, verifica tus permisos", Severity.Error);
+            }
+        }
     }
 
     //Upload desde la galeria
