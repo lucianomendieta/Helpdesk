@@ -2,8 +2,58 @@
 @inject IAdjuntoService adjuntoService;
 @inject AdjuntoInterop adjuntoInterop;
 @inject ISnackbar snackbar;
-@inject IDialogService dialogService;
 
+
+@if (error)
+{
+    <MudAlert Severity="Severity.Error">No se cargo ningun documento</MudAlert>
+}
+else if (documentos is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudStack>
+        @*Meto el placeholder para cargar archivos*@
+        @if (documentos.Length < 2)
+        {
+            <MudFileUpload T="IBrowserFile"
+                        FilesChanged="UploadAsync"
+                        Accept=".pdf"
+                        MaxFileSize="@(10*1024*1024)"
+                        @ref="fileUpload">
+                            <CustomContent>
+                                <MudPaper Outlined="true" Style="border-style: dashed; cursor: pointer;" @onclick="@(() => context.OpenFilePickerAsync())">
+                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" />
+                                    <MudText>Adjuntar Pdf</MudText>
+                                </MudPaper>
+                            </CustomContent>
+                    </MudFileUpload>
+        }
+
+        @if (documentos.Length == 0)
+        {
+            <MudText> Aun no hay adjuntos, puedes cargar uno aca mismo!</MudText>
+        }
+
+        @foreach (var doc in documentos)
+        {
+            <MudPaper Outlined="true" Class="pa-2">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" />
+                    <MudText>@doc.NombreOriginal</MudText>
+                    <MudText Typo="Typo.caption">@FormatearTamanio(doc.TamanioBytes)</MudText>
+
+                    <MudSpacer />
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Download"
+                        OnClick="@(() => DescargarAsync(doc))" />
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}
 
 
 
@@ -30,10 +80,41 @@
     //Descargar los archivos
     private async Task DescargarAsync(AdjuntoResponseDto doc)
     {
-        var stream = adjuntoService.MostrarAdjuntoAsync(TicketId, doc.Id);
+        var stream = await adjuntoService.MostrarAdjuntoAsync(TicketId, doc.Id);
         if (stream is null)
         {
-            
+            snackbar.Add("No se pudo descargar el archivo.", Severity.Error);
+            return;
+        }
+        await adjuntoInterop.DescargarArchivo( stream, doc.ContentType, doc.NombreOriginal);
+    }
+
+    //Subir los archivos
+    private async Task UploadAsync(IBrowserFile archivo)
+    {
+        var creado = await adjuntoService.SubirAdjuntoAsync(TicketId, archivo);
+        await fileUpload.ClearAsync();
+        if (creado is null)
+        {
+            snackbar.Add("No se pudo subir el archivo, verifique", Severity.Error);
+            return;
+        }
+        if (documentos is null) return;
+        documentos = documentos.Append(creado).ToArray();
+    }
+
+    //FOrmatear el tamaño dentro de la vista
+    private static string FormatearTamanio(long bytes)
+    {
+        if (bytes < (1 * 1024 * 1024))
+        {
+            var kbs = bytes / 1024d;
+            return $"{kbs:F0}";
+        }
+        else
+        {
+            var mbs = bytes / (1024d * 1024d);
+            return $"{mbs:F1}";
         }
     }
 }

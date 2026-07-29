@@ -36,7 +36,7 @@ public class AdjuntoInterop(IJSRuntime js) : IAsyncDisposable
     }
 
     //Creo la descarga de los arcivos
-    public async void DescargarArchivo(Stream stream, string contentType, string nombreArchivo)
+    public async Task DescargarArchivo(Stream stream, string contentType, string nombreArchivo)
     {
         //instancio el modulo de referencia
         using DotNetStreamReference streamReference = new(stream);
