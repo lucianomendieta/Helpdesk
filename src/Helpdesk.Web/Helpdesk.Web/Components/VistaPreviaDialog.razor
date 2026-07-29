@@ -1,6 +1,13 @@
 ﻿<MudDialog>
     <DialogContent>
-        <MudImage Src="@Url" Alt="@NombreArchivo" Fluid="true" />
+        @if (Tipo == TipoAdjunto.Imagen)
+        {
+            <MudImage Src="@Url" Alt="@NombreArchivo" Fluid="true" />
+        }
+        else
+        {
+            <iframe src="@Url" style="width: 100%; height: 70vh; border:none;" />
+        }
     </DialogContent>
     <DialogActions>
         <MudButton Href="@Url" StartIcon="@Icons.Material.Filled.Download" download="@NombreArchivo">Descargar</MudButton>
@@ -14,7 +21,7 @@
 
     [Parameter] public string Url { get; set; } = string.Empty;
     [Parameter] public string NombreArchivo { get; set; } = string.Empty;
+    [Parameter] public TipoAdjunto Tipo { get; set; }
 
-    
     
 }

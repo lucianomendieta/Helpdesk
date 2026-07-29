@@ -25,7 +25,11 @@ else
                        @ref="fileUpload"> 
             
             <CustomContent>
-                <MudPaper Outlined="true" Style="border-style: dashed; cursor: pointer;" @onclick="@(() => context.OpenFilePickerAsync())">
+                <MudPaper Outlined="true" 
+                    Style="border-style: dashed; cursor: pointer; width:100px; height:100px" 
+                    @onclick="@(() => context.OpenFilePickerAsync())"
+                    Class="d-flex flex-column align-content-center justify-content-center"
+                    >
                     <MudIcon Icon="@Icons.Material.Filled.Image" />
                     <MudText>Adjuntar imagen</MudText>
                 </MudPaper>
@@ -46,9 +50,10 @@ else
                 <MudImage Src="@url" 
                     Alt="@adjunto.NombreOriginal" 
                     Height="100" 
+                    Width="100"
                     ObjectFit="ObjectFit.Cover" 
                     Class="rounded" 
-                    @onclick="@(() => AbrirPreviaAsync(url, adjunto.NombreOriginal))"
+                    @onclick="@(() => AbrirPreviaAsync(url, adjunto.NombreOriginal, TipoAdjunto.Imagen))"
                     Style="cursor: pointer;"/>
             }
         }
@@ -91,13 +96,14 @@ else
         urls.Clear();
     }
 
-    private async Task AbrirPreviaAsync(string url, string nombre)
+    private async Task AbrirPreviaAsync(string url, string nombre, TipoAdjunto tipo)
     {
         //Paso los parametros al modal
         DialogParameters<VistaPreviaDialog> parameters = new()
         {
             {x => x.Url, url},
-            { x => x.NombreArchivo, nombre }
+            { x => x.NombreArchivo, nombre },
+            { x => x.Tipo, tipo}
         };
         //Le paso las opciones
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
@@ -108,6 +114,7 @@ else
     //Upload desde la galeria
     private async Task UploadAsync(IBrowserFile archivo)
     {
+        if (archivo is null) { return;}
         var creado = await adjuntoService.SubirAdjuntoAsync(TicketId, archivo);
         await fileUpload.ClearAsync();
         if (creado is null)

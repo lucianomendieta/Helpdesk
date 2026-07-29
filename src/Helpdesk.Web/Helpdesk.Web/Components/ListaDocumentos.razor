@@ -2,6 +2,7 @@
 @inject IAdjuntoService adjuntoService;
 @inject AdjuntoInterop adjuntoInterop;
 @inject ISnackbar snackbar;
+@inject IDialogService dialogService;
 
 
 @if (error)
@@ -16,7 +17,7 @@ else
 {
     <MudStack>
         @*Meto el placeholder para cargar archivos*@
-        @if (documentos.Length < 2)
+        @if (documentos.Length < MaxDocs)
         {
             <MudFileUpload T="IBrowserFile"
                         FilesChanged="UploadAsync"
@@ -24,12 +25,19 @@ else
                         MaxFileSize="@(10*1024*1024)"
                         @ref="fileUpload">
                             <CustomContent>
-                                <MudPaper Outlined="true" Style="border-style: dashed; cursor: pointer;" @onclick="@(() => context.OpenFilePickerAsync())">
+                    <MudPaper Outlined="true" 
+                        Style="border-style: dashed; cursor: pointer; width:100px; height:100px" 
+                        @onclick="@(() => context.OpenFilePickerAsync())"
+                        Class="d-flex flex-column align-content-center justify-content-center">
                                     <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" />
                                     <MudText>Adjuntar Pdf</MudText>
                                 </MudPaper>
                             </CustomContent>
                     </MudFileUpload>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">Alcanzaste el maximo de @MaxDocs documentos por ticket</MudAlert>
         }
 
         @if (documentos.Length == 0)
@@ -47,8 +55,11 @@ else
 
                     <MudSpacer />
 
-                    <MudIconButton Icon="@Icons.Material.Filled.Download"
-                        OnClick="@(() => DescargarAsync(doc))" />
+                    <MudChip T="string"
+                             Icon="@Icons.Material.Filled.Visibility"
+                             Color="Color.Primary"
+                             Variant="Variant.Text"
+                             OnClick="@(() => VerAsync(doc))">Ver</MudChip>
                 </MudStack>
             </MudPaper>
         }
@@ -62,6 +73,7 @@ else
     private AdjuntoResponseDto[]? documentos;
     private bool error;
     private MudFileUpload<IBrowserFile> fileUpload = default!;
+    private const int MaxDocs = 2;
 
     //Inicializo los documentos al llegar al form
     protected override async Task OnInitializedAsync()
@@ -77,21 +89,11 @@ else
         documentos = documentos.Where(d => d.Tipo == TipoAdjunto.Documento).ToArray();
     }
 
-    //Descargar los archivos
-    private async Task DescargarAsync(AdjuntoResponseDto doc)
-    {
-        var stream = await adjuntoService.MostrarAdjuntoAsync(TicketId, doc.Id);
-        if (stream is null)
-        {
-            snackbar.Add("No se pudo descargar el archivo.", Severity.Error);
-            return;
-        }
-        await adjuntoInterop.DescargarArchivo( stream, doc.ContentType, doc.NombreOriginal);
-    }
 
     //Subir los archivos
     private async Task UploadAsync(IBrowserFile archivo)
     {
+        if (archivo is null) { return; }
         var creado = await adjuntoService.SubirAdjuntoAsync(TicketId, archivo);
         await fileUpload.ClearAsync();
         if (creado is null)
@@ -103,18 +105,49 @@ else
         documentos = documentos.Append(creado).ToArray();
     }
 
-    //FOrmatear el tamaño dentro de la vista
+    //Formatear el tamaño dentro de la vista
     private static string FormatearTamanio(long bytes)
     {
         if (bytes < (1 * 1024 * 1024))
         {
             var kbs = bytes / 1024d;
-            return $"{kbs:F0}";
+            return $"{kbs:F0}KB";
         }
         else
         {
             var mbs = bytes / (1024d * 1024d);
-            return $"{mbs:F1}";
+            return $"{mbs:F1}MB";
         }
+    }
+
+    //Para vista previa de pdfs
+    private async Task VerAsync(AdjuntoResponseDto doc)
+    {
+        //obtengo el stream
+        var stream = await adjuntoService.MostrarAdjuntoAsync(TicketId, doc.Id);
+        if (stream is null)
+        {
+            snackbar.Add("No se pudo cargar el archivo", Severity.Error);
+            return;
+        }
+
+        //creo la url
+        var url = await adjuntoInterop.CreateUrl(stream, doc.ContentType);
+
+        //Le paso los parametros al modal
+        DialogParameters<VistaPreviaDialog> parameters = new()
+        {
+            { x => x.Url, url},
+            { x => x.NombreArchivo, doc.NombreOriginal},
+            { x => x.Tipo, doc.Tipo}
+        };
+
+        //armo los parametros para el dialog
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth=true};
+        var dialog = await dialogService.ShowAsync<VistaPreviaDialog>("Vista previa", parameters, options);
+
+        await dialog.Result;
+
+        await adjuntoInterop.RevokeUrl(url);
     }
 }
