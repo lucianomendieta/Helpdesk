@@ -10,6 +10,8 @@ public record CrearTicketDto(
     [property: Required(ErrorMessage = "Ingrese una descripcion")]
     string Descripcion,
 
-    PrioridadTicket? Prioridad = PrioridadTicket.Media
+    PrioridadTicket? Prioridad = PrioridadTicket.Media,
+
+    int? CategoriaId = null
     
     );

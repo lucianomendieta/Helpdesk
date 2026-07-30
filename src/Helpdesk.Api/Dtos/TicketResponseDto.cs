@@ -14,5 +14,8 @@ public record TicketResponseDto
     string? NombreAgente,
     int UsuarioCreo,
     int? AgenteAsignadoId,
-    PrioridadTicket Prioridad
+    PrioridadTicket Prioridad,
+    int? CategoriaId,
+    string? CategoriaNombre,
+    string? CategoriaIcono
     );

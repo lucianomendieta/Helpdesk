@@ -4,10 +4,7 @@ using Helpdesk.Api.Authorization;
 using Helpdesk.Api.Data;
 using Helpdesk.Api.Dtos;
 using Helpdesk.Api.Models;
-
 using Microsoft.EntityFrameworkCore;
-
-using static System.Net.WebRequestMethods;
 
 namespace Helpdesk.Api.Endpoints;
 
@@ -32,6 +29,8 @@ public static class TicketEndpoints
             .RequireAuthorization("SoloPersonal");
         group.MapPut("/{ticketId}/priority", ChangePriorityTicket)
             .RequireAuthorization("SoloPersonal");
+        group.MapPut("/{ticketId}/categoria", ChangeCategoryTicket)
+            .RequireAuthorization("SoloPersonal");
         //Deletes
         group.MapDelete("/{id}", DeleteTicket)
             .RequireAuthorization("SoloAdmins");
@@ -39,6 +38,8 @@ public static class TicketEndpoints
         return app;
     }
 
+    
+    #region Gets
     //Get TODOS los tickets
     private static async Task<IResult> GetTickets(HelpdeskDbContext contexto, HttpContext http)
     {
@@ -65,7 +66,10 @@ public static class TicketEndpoints
                                                         t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
                                                         t.UsuarioCreo,
                                                         t.AgenteAsignadoId,
-                                                        t.Prioridad)).ToListAsync());
+                                                        t.Prioridad,
+                                                        t.CategoriaId,
+                                                        t.Categoria == null ? null : t.Categoria.Nombre,
+                                                        t.Categoria == null ? null : t.Categoria.Icono)).ToListAsync());
     }
 
     //Get ticket por ID
@@ -83,7 +87,10 @@ public static class TicketEndpoints
                 t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
                 t.UsuarioCreo,
                 t.AgenteAsignadoId,
-                t.Prioridad)).FirstOrDefaultAsync();
+                t.Prioridad,
+                t.CategoriaId,
+                t.Categoria == null ? null : t.Categoria.Nombre,
+                t.Categoria == null ? null : t.Categoria.Icono)).FirstOrDefaultAsync();
         var rol = http.User.FindFirstValue(ClaimTypes.Role);
         var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -111,6 +118,84 @@ public static class TicketEndpoints
         return Results.Ok(ticket);
     }
 
+    //Obtener estadisticas
+    private static async Task<IResult> GetStats(ClaimsPrincipal user, HelpdeskDbContext contexto)
+    {
+        var rol = user.FindFirstValue(ClaimTypes.Role);
+        var usuario = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = contexto.Tickets.AsQueryable();
+
+        if (usuario is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var usuarioInt = int.Parse(usuario);
+
+        //agrupo por estado y cantidad
+        var agrupados = await FiltrarPorRol(query, rol, usuarioInt)
+            .GroupBy(t => t.Estado)
+            .Select(g => new { Estado = g.Key, Cantidad = g.Count() })
+            .ToListAsync();
+
+        var total = agrupados.Sum(c => c.Cantidad);
+
+        //cuanto los sin asignar
+        var sinAsignar = await FiltrarPorRol(query, rol, usuarioInt)
+            .Where(t => t.AgenteAsignadoId == null)
+            .CountAsync();
+
+        //funcion para contar los agrupados
+        int ContarEstado(EstadoTicket estado) => agrupados.FirstOrDefault(t => t.Estado == estado)?.Cantidad ?? 0;
+
+        return Results.Ok(new TicketStatsDto(
+                total,
+                ContarEstado(EstadoTicket.Abierto),
+                ContarEstado(EstadoTicket.EnProgreso),
+                ContarEstado(EstadoTicket.Hecho),
+                ContarEstado(EstadoTicket.Pendiente),
+                ContarEstado(EstadoTicket.Cerrado),
+                sinAsignar
+            ));
+    }
+
+    private static async Task<IResult> GetRecents(ClaimsPrincipal user, HelpdeskDbContext contexto)
+    {
+        //Obtengo informacion del usuario con los claims
+        var rol = user.FindFirstValue(ClaimTypes.Role);
+        var usuario = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = contexto.Tickets.AsQueryable();
+
+        if (usuario is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var usuarioInt = int.Parse(usuario);
+
+        //Armo el query
+        var filtrados = await FiltrarPorRol(query, rol, usuarioInt)
+            .OrderByDescending(t => t.FechaCreacion) //Los mas recientes
+            .Take(5) //Solo 5
+            .Select(t => new TicketResponseDto(
+                    t.Id,
+                    t.Titulo,
+                    t.Descripcion,
+                    t.FechaCreacion,
+                    t.Estado,
+                    t.Usuario.NombrePila + " " + t.Usuario.ApellidoPila,
+                    t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
+                    t.UsuarioCreo,
+                    t.AgenteAsignadoId,
+                    t.Prioridad,
+                    t.CategoriaId,
+                    t.Categoria == null ? null : t.Categoria.Nombre,
+                    t.Categoria == null ? null : t.Categoria.Icono)).ToListAsync(); //Devuelvo el response en el formato conocido
+        return Results.Ok(filtrados);
+    }
+
+    #endregion
+
     //Crear ticket
     private static async Task<IResult> PostTicket(CrearTicketDto dto, HelpdeskDbContext contexto, HttpContext http)
     {
@@ -121,13 +206,21 @@ public static class TicketEndpoints
             return Results.Unauthorized();
         }
 
+        //valido que haya venido categoria, que exista y que este activa
+        if (dto.CategoriaId is not null)
+        {
+            bool ok = await contexto.Categorias.AnyAsync(c => c.Id == dto.CategoriaId && c.Activa);
+            if (!ok) { return Results.BadRequest("La categoria no existe o esta inactiva"); }
+        }
 
-        Ticket nuevo = new Ticket
+
+        Ticket nuevo = new()
         {
             UsuarioCreo = int.Parse(usuario),
             Titulo = dto.Titulo,
             Descripcion = dto.Descripcion,
-            Prioridad = dto.Prioridad ?? PrioridadTicket.Media
+            Prioridad = dto.Prioridad ?? PrioridadTicket.Media,
+            CategoriaId = dto.CategoriaId
         };
 
         contexto.Tickets.Add(nuevo);
@@ -144,10 +237,14 @@ public static class TicketEndpoints
                 t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
                 t.UsuarioCreo,
                 t.AgenteAsignadoId,
-                t.Prioridad
+                t.Prioridad,
+                t.CategoriaId,
+                t.Categoria == null ? null : t.Categoria.Nombre,
+                t.Categoria == null ? null : t.Categoria.Icono
                 )).FirstAsync());
     }
 
+    #region Puts
     //Modificar ticket (solo titulo y descripcion)
     private static async Task<IResult> PutTicket(int id, ActualizarTicketDto dto, HelpdeskDbContext contexto, HttpContext http)
     {
@@ -179,19 +276,7 @@ public static class TicketEndpoints
         return Results.NoContent();
     }
 
-    //Borrar un ticket
-    private static async Task<IResult> DeleteTicket(int id, HelpdeskDbContext contexto)
-    {
-        var ticket = await contexto.Tickets.FindAsync(id);
-        if (ticket is null)
-        {
-            return Results.NotFound();
-        }
-        contexto.Tickets.Remove(ticket);
-        await contexto.SaveChangesAsync();
-        return Results.NoContent();
-    }
-
+    
     //Asignar agente/analista a un ticket
     private static async Task<IResult> AssignTicket(int ticketId, HelpdeskDbContext contexto, AsignarTicketDto dto)
     {
@@ -301,6 +386,52 @@ public static class TicketEndpoints
         return Results.NoContent();
     }
 
+    //Cambiar categoria de ticket
+    private static async Task<IResult> ChangeCategoryTicket(int ticketId, HelpdeskDbContext contexto, ActualizarCategoriaTicketDto dto, HttpContext http)
+    {
+        #region Validacion del usuario y rol
+        var rol = http.User.FindFirstValue(ClaimTypes.Role);
+        //Verifico si el usuario a chequear existe
+        var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuario is null)
+        {
+            return Results.Unauthorized();
+        }
+        //Parse a int
+        var usuarioInt = int.Parse(usuario);
+        //Verifico si el ticket existe
+        var ticket = await contexto.Tickets.FindAsync(ticketId);
+        if (ticket is null)
+        {
+            return Results.NotFound();
+        }
+
+        //Si no puede editar, forbid
+        if (!TicketPermisos.PuedeGestionar(ticket, rol, usuarioInt))
+        {
+            return Results.Forbid();
+        }
+        #endregion
+
+        #region Validacion de categorias
+        //Validamos que el usuario haya ingresado una categoria
+        if (dto.CategoriaId is null) { return Results.BadRequest("Ingrese una categoria"); }
+        //Validamos que la categoria este activa y exista
+        //valido que haya venido categoria, que exista y que este activa
+        bool ok = await contexto.Categorias.AnyAsync(c => c.Id == dto.CategoriaId && c.Activa);
+        if (!ok) { return Results.BadRequest("La categoria no existe o esta inactiva"); }
+
+        #endregion
+
+        ticket.CategoriaId = dto.CategoriaId;
+
+        //Guardo la actualizacion correcta
+        await contexto.SaveChangesAsync();
+        return Results.NoContent();
+    }
+
+    #endregion
+
     //Obtengo el query de ticket
     private static IQueryable<Ticket> FiltrarPorRol(IQueryable<Ticket> query, string? rol, int usuarioId)
     {
@@ -317,76 +448,17 @@ public static class TicketEndpoints
         return query;
     }
 
-    //Obtener estadisticas
-    private static async Task<IResult> GetStats(ClaimsPrincipal user, HelpdeskDbContext contexto)
+    //Borrar un ticket
+    private static async Task<IResult> DeleteTicket(int id, HelpdeskDbContext contexto)
     {
-        var rol = user.FindFirstValue(ClaimTypes.Role);
-        var usuario = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var query = contexto.Tickets.AsQueryable();
-
-        if (usuario is null)
+        var ticket = await contexto.Tickets.FindAsync(id);
+        if (ticket is null)
         {
-            return Results.Unauthorized();
+            return Results.NotFound();
         }
-
-        var usuarioInt = int.Parse(usuario);
-
-        //agrupo por estado y cantidad
-        var agrupados = await FiltrarPorRol(query, rol, usuarioInt)
-            .GroupBy(t => t.Estado)
-            .Select(g => new { Estado = g.Key, Cantidad = g.Count() })
-            .ToListAsync();
-
-        var total = agrupados.Sum(c => c.Cantidad);
-
-        //cuanto los sin asignar
-        var sinAsignar = await FiltrarPorRol(query, rol, usuarioInt)
-            .Where(t => t.AgenteAsignadoId == null)
-            .CountAsync();
-
-        //funcion para contar los agrupados
-        int ContarEstado(EstadoTicket estado) => agrupados.FirstOrDefault(t => t.Estado == estado)?.Cantidad ?? 0;
-
-        return Results.Ok(new TicketStatsDto(
-                total,
-                ContarEstado(EstadoTicket.Abierto),
-                ContarEstado(EstadoTicket.EnProgreso),
-                ContarEstado(EstadoTicket.Hecho),
-                ContarEstado(EstadoTicket.Pendiente),
-                ContarEstado(EstadoTicket.Cerrado),
-                sinAsignar
-            ));
+        contexto.Tickets.Remove(ticket);
+        await contexto.SaveChangesAsync();
+        return Results.NoContent();
     }
 
-    private static async Task<IResult> GetRecents(ClaimsPrincipal user, HelpdeskDbContext contexto)
-    {
-        //Obtengo informacion del usuario con los claims
-        var rol = user.FindFirstValue(ClaimTypes.Role);
-        var usuario = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var query = contexto.Tickets.AsQueryable();
-
-        if (usuario is null)
-        {
-            return Results.Unauthorized();
-        }
-
-        var usuarioInt = int.Parse(usuario);
-
-        //Armo el query
-        var filtrados = await FiltrarPorRol(query, rol, usuarioInt)
-            .OrderByDescending(t => t.FechaCreacion) //Los mas recientes
-            .Take(5) //Solo 5
-            .Select(t => new TicketResponseDto(
-                    t.Id,
-                    t.Titulo,
-                    t.Descripcion,
-                    t.FechaCreacion,
-                    t.Estado,
-                    t.Usuario.NombrePila + " " + t.Usuario.ApellidoPila,
-                    t.AgenteAsignado == null ? null : t.AgenteAsignado.NombrePila + " " + t.AgenteAsignado.ApellidoPila,
-                    t.UsuarioCreo,
-                    t.AgenteAsignadoId,
-                    t.Prioridad)).ToListAsync(); //Devuelvo el response en el formato conocido
-        return Results.Ok(filtrados);
-    }
 }
