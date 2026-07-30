@@ -12,5 +12,8 @@ public class Ticket
     public EstadoTicket Estado {get; set;} = EstadoTicket.Abierto;
     public Usuario? Usuario {get; set;}
     public PrioridadTicket Prioridad { get; set; } = PrioridadTicket.Media;
+    public Categoria? Categoria {get; set;}
+    public int? CategoriaId {get; set;}
+    public DateTimeOffset? FechaVencimiento { get; set; }
 
 }

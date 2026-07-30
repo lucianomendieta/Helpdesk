@@ -4,6 +4,7 @@ using Helpdesk.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Helpdesk.Api.Migrations
 {
     [DbContext(typeof(HelpdeskDbContext))]
-    partial class HelpdeskDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730140353_Categorias_y_config_de_empresas")]
+    partial class Categorias_y_config_de_empresas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

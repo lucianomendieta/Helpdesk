@@ -8,6 +8,9 @@ public class HelpdeskDbContext : DbContext
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<TicketDetalle> TicketDetalles => Set<TicketDetalle>();
     public DbSet<TicketAdjunto> TicketAdjuntos => Set<TicketAdjunto>();
+    public DbSet<Categoria> Categorias => Set<Categoria>();
+    public DbSet<ConfiguracionEmpresa> ConfiguracionesEmpresa => Set<ConfiguracionEmpresa>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,5 +68,55 @@ public class HelpdeskDbContext : DbContext
         modelBuilder.Entity<TicketAdjunto>()
             .HasIndex(ta => ta.NombreAlmacenado)
             .IsUnique();
+
+        modelBuilder.Entity<Categoria>()
+            .HasIndex(c => c.Nombre)
+            .IsUnique();
+
+        //Ticket a categoria
+        modelBuilder.Entity<Ticket>()
+            .HasOne(t => t.Categoria)
+            .WithMany()
+            .HasForeignKey(t => t.CategoriaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        //Establezco los limites de propiedades
+        modelBuilder.Entity<Categoria>()
+            .Property(c => c.Nombre)
+            .HasMaxLength (90);
+
+        modelBuilder.Entity<Categoria>()
+            .Property(c => c.Descripcion)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<Categoria>()
+            .Property(c => c.Icono)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<ConfiguracionEmpresa>()
+            .Property(e => e.NombreEmpresa)
+            .HasMaxLength(120);
+
+        //seed para datos
+        modelBuilder.Entity<Categoria>()
+            .HasData(new Categoria
+            {
+                Id = 1,
+                Nombre = "Otra cosa",
+                Icono = "HelpOutline",
+                EsDelSistema = true,
+                Activa = true,
+                PrioridadSugerida = PrioridadTicket.Media
+            });
+
+        modelBuilder.Entity<ConfiguracionEmpresa>()
+            .HasData(new ConfiguracionEmpresa
+            {
+                Id = 1,
+                NombreEmpresa = "Mi empresa",
+                UsarFechaVencimiento = false
+            });
+
+        
     }
 }
