@@ -58,6 +58,9 @@ builder.Services.AddScoped<IAdjuntoService, AdjuntoService>();
 //Interop de adjuntos
 builder.Services.AddScoped<AdjuntoInterop>();
 
+//Servicio de categorias
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
