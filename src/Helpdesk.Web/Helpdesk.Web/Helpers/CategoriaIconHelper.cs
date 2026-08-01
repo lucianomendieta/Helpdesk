@@ -26,4 +26,7 @@ public static class CategoriaIconHelper
         Categoria2Icon.TryGetValue(clave, out var icon);
         return icon ?? Icons.Material.Filled.HelpOutline;
     }
+
+    //metodo contrario, saco las claves para usar en el helper de arriba
+    public static IEnumerable<string> ClavesDisponibles() => Categoria2Icon.Keys;
 }

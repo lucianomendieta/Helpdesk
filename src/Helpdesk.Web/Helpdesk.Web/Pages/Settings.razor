@@ -1,0 +1,47 @@
+﻿@page "/settings"
+@attribute [Authorize(Roles="Administrador,Gerente")]
+
+@using Helpdesk.Web.Models
+@using Microsoft.AspNetCore.Authorization
+
+@inject ICategoriaService categoriaService;
+@inject IDialogService dialogService;
+@inject ISnackbar snackbar;
+
+<MudContainer>
+    <MudTable T="CategoriaResponseDto" 
+        Items="categorias ?? []"
+        Loading="categorias is null">
+        @*Cabeceras y titulos de tablas*@
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)" > Icono </MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Nombre)"> Nombre </MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Descripcion!)"> Descripcion </MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.PrioridadSugerida)"> Prioridad Sugerida </MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Activa)"> Estado </MudTableSortLabel></MudTh>
+            <MudTh> Acciones </MudTh>
+
+        </HeaderContent>
+        @*Aca van los datos para la tabla*@
+        <RowTemplate>
+            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)" />
+            <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+            <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
+            <MudTd DataLabel="Prioridad Sugerida">@context.PrioridadSugerida</MudTd>
+            <MudTd DataLabel="Estado">@(context.Activa ? "Activa" : "Inactiva")</MudTd>
+            <MudTd DataLabel="Acciones" > Aqui van los botones </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+
+
+@code {
+    private CategoriaResponseDto[]? categorias;
+
+    //Inicializo los datos:
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await categoriaService.GetCategoriasAsync();
+    }
+}

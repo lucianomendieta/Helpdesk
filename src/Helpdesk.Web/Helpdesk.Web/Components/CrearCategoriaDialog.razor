@@ -1,0 +1,66 @@
+﻿@inject ICategoriaService categoriaService;
+@inject ISnackbar snackbar;
+
+<MudDialog>
+    <TitleContent>
+        Nueva categoria
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="IsValid">
+            <MudStack Row="true">
+                @*select de iconos, pasada visual pendiente*@
+                <MudSelect T="string" @bind-Value="dto.Icono" Required="true" Style="max-width: 90px;">
+                    @foreach (var clave in CategoriaIconHelper.ClavesDisponibles())
+                    {
+                        <MudSelectItem T="string" Value="@clave">
+                            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(clave)" />
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField T="string" Label="Nombre de categoria" @bind-Value="dto.Nombre" Required="true" RequiredError="Ingrese el nombre de la categoria" />
+            </MudStack>
+            <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" />
+            <MudSelect T="PrioridadTicket?" Label="Prioridad Sugerida" @bind-Value="dto.PrioridadSugerida">
+                @foreach (var prioridad in Enum.GetValues<PrioridadTicket>())
+                {
+                    <MudSelectItem T="PrioridadTicket?" Value="prioridad"> @prioridad</MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid">Crear</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm form;
+    private bool IsValid;
+    private CrearCategoriaDto dto = new()
+    {
+        PrioridadSugerida = PrioridadTicket.Media
+    };
+
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.ValidateAsync();
+        if (!IsValid) {return;}
+        var resultado = await categoriaService.CreateCategoriaAsync(dto);
+        if (resultado.Exito)
+        {
+            MudDialog.Close(DialogResult.Ok(resultado.Data));
+        }
+        else
+        {
+            snackbar.Add(resultado.Error, Severity.Error);
+        }
+    } 
+}

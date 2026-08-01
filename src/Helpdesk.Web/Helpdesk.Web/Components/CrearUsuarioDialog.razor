@@ -26,7 +26,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary">Crear</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid">Crear</MudButton>
     </DialogActions>
 </MudDialog>
 
