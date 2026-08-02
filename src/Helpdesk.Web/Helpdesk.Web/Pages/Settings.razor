@@ -9,12 +9,19 @@
 @inject ISnackbar snackbar;
 
 <MudContainer>
-    <MudTable T="CategoriaResponseDto" 
-        Items="categorias ?? []"
-        Loading="categorias is null">
+    
+    <MudButton
+        StartIcon="@Icons.Material.Filled.Add"
+        OnClick="OpenDialogAsync">
+        Crear Categoria
+    </MudButton>
+    
+    <MudTable T="CategoriaResponseDto"
+              Items="categorias ?? []"
+              Loading="categorias is null">
         @*Cabeceras y titulos de tablas*@
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)" > Icono </MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)"> Icono </MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Nombre)"> Nombre </MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Descripcion!)"> Descripcion </MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.PrioridadSugerida)"> Prioridad Sugerida </MudTableSortLabel></MudTh>
@@ -24,12 +31,12 @@
         </HeaderContent>
         @*Aca van los datos para la tabla*@
         <RowTemplate>
-            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)" />
+            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)"/>
             <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
             <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
             <MudTd DataLabel="Prioridad Sugerida">@context.PrioridadSugerida</MudTd>
             <MudTd DataLabel="Estado">@(context.Activa ? "Activa" : "Inactiva")</MudTd>
-            <MudTd DataLabel="Acciones" > Aqui van los botones </MudTd>
+            <MudTd DataLabel="Acciones"> Aqui van los botones </MudTd>
         </RowTemplate>
     </MudTable>
 </MudContainer>
@@ -43,5 +50,19 @@
     protected override async Task OnInitializedAsync()
     {
         categorias = await categoriaService.GetCategoriasAsync();
+    }
+    
+    
+    //llamo al dialogo
+    private async Task OpenDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await dialogService.ShowAsync<CrearCategoriaDialog>("Nueva categoria", options);
+        
+        var result = await dialog.Result;
+        if (result?.Data is CategoriaResponseDto nuevo)
+        {
+            categorias = categorias?.Append(nuevo).ToArray();
+        }
     }
 }
