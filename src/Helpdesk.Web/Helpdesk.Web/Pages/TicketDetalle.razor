@@ -13,6 +13,7 @@
 @inject ITicketDetalleService ticketDetalle;
 @inject IUsuarioService usuarioService;
 @inject NavigationManager navigationManager;
+@inject CategoriaService CategoriaService;
 @attribute [Authorize]
 @page "/tickets/{Id:int}"
 
@@ -155,6 +156,19 @@ else
                             </MudSelect>
                         </Authorized>
                     </AuthorizeView>
+                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                        <Authorized>
+                            <MudSelect T="int" Label="Categoria" @bind-Value="">
+                                @if (categorias is not null)
+                                {
+                                    @foreach (var c in categorias)
+                                    {
+                                        <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                                    }
+                                }
+                            </MudSelect>       
+                        </Authorized>
+                    </AuthorizeView>
                 </MudPaper>
         </MudItem>
     </MudGrid>
@@ -173,6 +187,7 @@ else
     private UsuarioDto[]? agentes;
 
     private CrearTicketDetalleDto detalleDto = new ();
+    private CategoriaResponseDto[]? categorias;
     private EstadoResponse? estadoResponse;
 
     [CascadingParameter]
@@ -269,4 +284,5 @@ else
             snackbar.Add("Usuario Asignado!", Severity.Info);
         }
     }
+
 }

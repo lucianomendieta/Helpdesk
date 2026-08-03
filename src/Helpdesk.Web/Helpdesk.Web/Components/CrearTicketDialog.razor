@@ -56,15 +56,15 @@
         {
             <MudForm @ref="form" @bind-IsValid="IsValid">
                 <MudText>Titulo:</MudText>
-                <MudTextField T="string" Label="Titulo" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo"/>
+                <MudTextField T="string" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo"/>
                 <MudText>Descripcion:</MudText>
-                <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"/>
+                <MudTextField T="string" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"/>
                 <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                     
                     @* Selects de categorias o de prioridades para un staff*@
                     <MudStack Row="true">
                         <MudSelect T="int" Label="Categoria" @bind-Value="dto.CategoriaId">
-                            @if (categorias is null)
+                            @if (categorias is not null)
                             {
                                 @foreach (var c in categorias)
                                 {
@@ -113,11 +113,7 @@
             <MudButton OnClick="VolverAPaso1" Disabled="enviando">← volver</MudButton>
         }
         <MudButton OnClick="Cancel" Disabled="enviando">Cancelar</MudButton>
-        @if (paso == 1)
-        {
-            <MudButton OnClick="MostrarPaso2" Color="Color.Primary" Disabled="categorias is null || !categorias.Any()">Continuar</MudButton>
-        }
-        else
+        @if (paso == 2)
         {
             <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando">Crear</MudButton>
         }
@@ -153,6 +149,10 @@
         paso = esCliente ? 1 : 2;
 
         categorias = await categoriaService.GetCategoriasActivasAsync();
+        if (categorias.Any())
+        {
+            dto.CategoriaId = categorias.First().Id;
+        }
     }
     private void Cancel() => MudDialog.Cancel();
 
