@@ -4,54 +4,123 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ITicketService TicketService;
 @inject IAdjuntoService adjuntoService;
+@inject ICategoriaService categoriaService;
 @inject MudBlazor.ISnackbar snackbar;
 
 
 <MudDialog Class="pa-4">
     <TitleContent>
-        Nuevo Ticket
+        @if (paso == 1)
+        {
+            <MudText> Con que necesitas ayuda?</MudText>
+        }
+        else
+        {
+            <MudText>Nuevo ticket</MudText>
+        }
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="IsValid">
-            <MudText>Titulo:</MudText>
-            <MudTextField T="string" Label="Titulo" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo" />
+        @* Seleccion de categoria*@
+        @if (paso == 1)
+        {
+            <MudText Typo="Typo.h6" Class="mb-4">Elige la opcion que mejor describa tu solicitud:</MudText>
+            <MudGrid>
+                @if (categorias is null)
+                {
+                    <MudProgressCircular Indeterminate="true" />
+                }
+                else if (!categorias.Any())
+                {
+                    <MudText Typo="Typo.body1" Color="Color.Error">No hay categorias disponibles. Contacta al administrador.</MudText>
+                }
+                else
+                {
+                    @foreach (var categoria in categorias)
+                    {
+                        <MudItem xs="12" sm="6" md="4" Class="pb-2">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       OnClick="() => SeleccionarCategoria(categoria)">
+                                <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(categoria.Icono)" Size="Size.Small" />
+                                <MudText Class="mt-1">@categoria.Nombre</MudText>
+                                
+                            </MudButton>
+                            
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        }
+        else
+        {
+            <MudForm @ref="form" @bind-IsValid="IsValid">
+                <MudText>Titulo:</MudText>
+                <MudTextField T="string" Label="Titulo" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo"/>
                 <MudText>Descripcion:</MudText>
-            <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket" />
-            <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad">
-                    @foreach (var p in Enum.GetValues<PrioridadTicket>())
-                    {
-                        <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
-                    }
-                </MudSelect>
-            </AuthorizeView>
-            <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5*1024*1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
-                <CustomContent>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.AttachFile"
-                               OnClick="@(() => context.OpenFilePickerAsync())">
-                        Adjuntar imagenes
-                    </MudButton>
-                </CustomContent>
-                <SelectedTemplate>
-                    @if (context is not null)
-                    {
-                        <MudStack Row="true" Wrap="Wrap.Wrap" Style="row-gap:4">
-                            @foreach (var archivo in context)
+                <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"/>
+                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                    
+                    @* Selects de categorias o de prioridades para un staff*@
+                    <MudStack Row="true">
+                        <MudSelect T="int" Label="Categoria" @bind-Value="dto.CategoriaId">
+                            @if (categorias is null)
                             {
-                                <MudChip T="string" OnClose="@(async () => await fileUpload.RemoveFileAsync(archivo))">@archivo.Name</MudChip>
+                                @foreach (var c in categorias)
+                                {
+                                <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                                }
                             }
-                        </MudStack>
-                    }
-                </SelectedTemplate>
-            </MudFileUpload>
-        </MudForm>
+                        </MudSelect>
+                        <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad">
+                            @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                            {
+                                <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudStack>
+
+                </AuthorizeView>
+                <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5 * 1024 * 1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
+                    <CustomContent>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.AttachFile"
+                                   OnClick="@(() => context.OpenFilePickerAsync())">
+                            Adjuntar archivos
+                        </MudButton>
+                    </CustomContent>
+                    <SelectedTemplate>
+                        @if (context is not null)
+                        {
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Style="row-gap:4">
+                                @foreach (var archivo in context)
+                                {
+                                    <MudChip T="string" OnClose="@(async () => await fileUpload.RemoveFileAsync(archivo))">@archivo.Name</MudChip>
+                                }
+                            </MudStack>
+                        }
+                    </SelectedTemplate>
+                </MudFileUpload>
+            </MudForm>
+        }
+        
     </DialogContent>
         
     <DialogActions>
+        @if (paso == 2 && esCliente )
+        {
+            <MudButton OnClick="VolverAPaso1" Disabled="enviando">← volver</MudButton>
+        }
         <MudButton OnClick="Cancel" Disabled="enviando">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando">Crear</MudButton>
+        @if (paso == 1)
+        {
+            <MudButton OnClick="MostrarPaso2" Color="Color.Primary" Disabled="categorias is null || !categorias.Any()">Continuar</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando">Crear</MudButton>
+        }
     </DialogActions>
 </MudDialog>
 
@@ -59,15 +128,56 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
+    [CascadingParameter] private Task<AuthenticationState> AuthstateTask { get; set; } = null!;
+    
     private MudFileUpload<IReadOnlyList<IBrowserFile>> fileUpload = default!;
     private IReadOnlyList<IBrowserFile>? archivos;
     private bool enviando;
     private MudForm form;
     private bool IsValid;
+    private bool esCliente;
     private CrearTicketDto dto = new();
+    //Fases de cliente
+    private int paso = 1;
+    private CategoriaResponseDto[]? categorias;
 
+    
+    //Inicializo los datos:
+    protected override async Task OnInitializedAsync()
+    {
+        //Obtengo los datos del usuario, si es cliente se muestra selector de categorias simple
+        var state = await AuthstateTask;
+        var user = state.User;
+
+        esCliente = user.IsInRole("Cliente");
+        paso = esCliente ? 1 : 2;
+
+        categorias = await categoriaService.GetCategoriasActivasAsync();
+    }
     private void Cancel() => MudDialog.Cancel();
 
+    private void VolverAPaso1()
+    {
+        paso = 1;
+        
+        //Si el usuario quiere volver a una categoria diferente, limpiamos lo que se cargo 
+        dto = new CrearTicketDto();
+        archivos = null;
+        IsValid = false;
+    }
+
+    private void MostrarPaso2()
+    {
+        paso = 2;
+    }
+
+    private void SeleccionarCategoria(CategoriaResponseDto categoria)
+    {
+        dto.CategoriaId = categoria.Id; //Guardo la categoria seleccionada
+        dto.Prioridad = categoria.PrioridadSugerida;
+        MostrarPaso2();
+    }
+    
     private async Task Submit()
     {
         await form.ValidateAsync();
