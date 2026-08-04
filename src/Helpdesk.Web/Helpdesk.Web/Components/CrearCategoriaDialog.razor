@@ -38,6 +38,9 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
+    
+    //Esta en edicion?
+    [Parameter] public CategoriaResponseDto? categoriaExistente { get; set; }
 
     private MudForm form;
     private bool IsValid;
@@ -46,6 +49,20 @@
         PrioridadSugerida = PrioridadTicket.Media
     };
 
+    protected override void OnInitialized()
+    {
+        if (categoriaExistente is not null)
+        {
+            dto = new CrearCategoriaDto()
+            {
+                Nombre = categoriaExistente.Nombre,
+                Descripcion = categoriaExistente.Descripcion,
+                Icono = categoriaExistente.Icono,
+                PrioridadSugerida = categoriaExistente.PrioridadSugerida
+            };
+        }
+    }
+
 
     private void Cancel() => MudDialog.Cancel();
 
@@ -53,14 +70,43 @@
     {
         await form.ValidateAsync();
         if (!IsValid) {return;}
-        var resultado = await categoriaService.CreateCategoriaAsync(dto);
-        if (resultado.Exito)
+
+        if (categoriaExistente is not null)
         {
-            MudDialog.Close(DialogResult.Ok(resultado.Data));
+            var dtoActualizar = new ActualizarCategoriaDto()
+            {
+                Nombre = categoriaExistente.Nombre,
+                Descripcion = categoriaExistente.Descripcion,
+                Icono = categoriaExistente.Icono,
+                PrioridadSugerida = categoriaExistente.PrioridadSugerida
+            };
+            var resultado = await categoriaService.UpdateCategoriaAsync(categoriaExistente.Id, dtoActualizar);
+            if (resultado.Exito)
+            {
+                categoriaExistente.Nombre = dtoActualizar.Nombre;
+                categoriaExistente.Descripcion = dtoActualizar.Descripcion;
+                categoriaExistente.Icono = dtoActualizar.Icono;
+                categoriaExistente.PrioridadSugerida = dtoActualizar.PrioridadSugerida;
+                
+                MudDialog.Close(DialogResult.Ok(categoriaExistente));
+            }
+            else
+            {
+                snackbar.Add(resultado.Error!, Severity.Error);
+            }
         }
         else
         {
-            snackbar.Add(resultado.Error!, Severity.Error);
+            var resultado = await categoriaService.CreateCategoriaAsync(dto);
+            if (resultado.Exito)
+            {
+                MudDialog.Close(DialogResult.Ok(resultado.Data));
+            }
+            else
+            {
+                snackbar.Add(resultado.Error!, Severity.Error);
+            }
         }
+        
     } 
 }

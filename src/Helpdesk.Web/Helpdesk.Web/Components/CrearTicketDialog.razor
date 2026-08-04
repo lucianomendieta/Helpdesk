@@ -1,7 +1,4 @@
-﻿@using Helpdesk.Web.Dtos;
-@using Helpdesk.Web.Services;
-@using Helpdesk.Web.Models;
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @inject ITicketService TicketService;
 @inject IAdjuntoService adjuntoService;
 @inject ICategoriaService categoriaService;
@@ -136,6 +133,7 @@
     //Fases de cliente
     private int paso = 1;
     private CategoriaResponseDto[]? categorias;
+    
 
     
     //Inicializo los datos:
@@ -153,6 +151,8 @@
         {
             dto.CategoriaId = categorias.First().Id;
         }
+
+        
     }
     private void Cancel() => MudDialog.Cancel();
 
@@ -200,19 +200,22 @@
                 foreach (var archivo in archivos)
                 {
                     var subido = await adjuntoService.SubirAdjuntoAsync(nuevo.Id, archivo);
-                    if (subido is null) { fallidos++; }
+                    if (subido is null)
+                    {
+                        fallidos++;
+                    }
                 }
-                if (fallidos > 0)
+            }
+
+            if (fallidos > 0)
                 {
                     snackbar.Add($"No se pudieron adjuntar {fallidos} archivo(s)", Severity.Warning);
                 }
                 else
                 {
-                    MudDialog.Close(DialogResult.Ok(nuevo));
                     snackbar.Add("Ticket creado!", Severity.Info);
                 }
-            }
-
+            MudDialog.Close(DialogResult.Ok(nuevo));
         }
         finally
         {

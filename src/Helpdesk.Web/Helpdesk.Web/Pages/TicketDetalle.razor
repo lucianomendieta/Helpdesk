@@ -13,7 +13,8 @@
 @inject ITicketDetalleService ticketDetalle;
 @inject IUsuarioService usuarioService;
 @inject NavigationManager navigationManager;
-@inject CategoriaService CategoriaService;
+@inject ICategoriaService CategoriaService;
+
 @attribute [Authorize]
 @page "/tickets/{Id:int}"
 
@@ -158,12 +159,12 @@ else
                     </AuthorizeView>
                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                         <Authorized>
-                            <MudSelect T="int" Label="Categoria" @bind-Value="">
+                            <MudSelect T="int?" Label="Categoria" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
                                 @if (categorias is not null)
                                 {
                                     @foreach (var c in categorias)
                                     {
-                                        <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                                        <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
                                     }
                                 }
                             </MudSelect>       
@@ -198,6 +199,7 @@ else
         var resultado = await ticketService.GetTicketAsync(Id);
         estadoResponse = resultado.Estado;
         ticket = resultado.Ticket;
+        
 
         if (estadoResponse == EstadoResponse.Ok)
         {
@@ -207,6 +209,7 @@ else
             if (user.IsInRole("Administrador") || user.IsInRole("Gerente"))
             {
                 agentes = await usuarioService.GetUsuariosAsignablesAsync();
+                categorias = await CategoriaService.GetCategoriasActivasAsync();
             }
         }
     }  
@@ -285,4 +288,22 @@ else
         }
     }
 
+    //cambio la categoria del ticket
+    private async Task ChangeCategoriaAsync(int? nuevo)
+    {
+        var dto = new ActualizarCategoriaTicketDto()
+        {
+            categoriaId = nuevo!.Value
+        };
+        var hasUpdated = await ticketService.ChangeTicketCategoriaAsync(Id, dto);
+        if (hasUpdated)
+        {
+            ticket!.CategoriaId = nuevo;
+        }
+        else
+        {
+            snackbar.Add("No se pudo editar la categoria del ticket", Severity.Error);
+        }
+
+}
 }

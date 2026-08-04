@@ -31,12 +31,19 @@
         </HeaderContent>
         @*Aca van los datos para la tabla*@
         <RowTemplate>
-            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)"/>
+            <MudTd><MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)"/></MudTd>
             <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
             <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
             <MudTd DataLabel="Prioridad Sugerida">@context.PrioridadSugerida</MudTd>
             <MudTd DataLabel="Estado">@(context.Activa ? "Activa" : "Inactiva")</MudTd>
-            <MudTd DataLabel="Acciones"> Aqui van los botones </MudTd>
+            <MudTd DataLabel="Acciones">
+                
+                <MudIconButton Icon="@(context.Activa ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                               Disabled="context.EsDelSistema"
+                               OnClick="() => ToggleEstadoAsync(context)"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               OnClick="() => EditCategoriaAsync(context)"/> 
+            </MudTd>
         </RowTemplate>
     </MudTable>
 </MudContainer>
@@ -65,4 +72,34 @@
             categorias = categorias?.Append(nuevo).ToArray();
         }
     }
+    
+    //acciones con las categorias
+    private async Task ToggleEstadoAsync(CategoriaResponseDto categoria)
+    {
+        var dto = new ActualizarEstadoCategoriaDto() { Activa = !categoria.Activa }; //Invierto el estado
+        var resultado = await categoriaService.UpdateEstadoCategoriaAsync(categoria.Id, dto);
+
+        if (resultado.Exito)
+        {
+            categoria.Activa = !categoria.Activa;
+        }
+        else
+        {
+            snackbar.Add("No se pudo actualizar el estado", Severity.Error);
+        }
+    }
+
+    private async Task EditCategoriaAsync(CategoriaResponseDto categoria)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        DialogParameters<CrearCategoriaDialog> parameters = new()
+        {
+            { x => x.categoriaExistente, categoria }
+        };
+
+        var dialog = await dialogService.ShowAsync<CrearCategoriaDialog>("Editar categoria", parameters, options);
+        var result = await dialog.Result;
+    }
+    
+    
 }

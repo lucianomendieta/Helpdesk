@@ -18,6 +18,7 @@ public interface ITicketService
     Task<bool> ChangeTicketPriorityAsync(int ticketId, ActualizarPrioridadTicketDto dto);
     Task<TicketsStatsDto?> GetTicketsStatsAsync();
     Task<TicketDto[]?> GetTicketsRecientesAsync();
+    Task<bool> ChangeTicketCategoriaAsync(int ticketId, ActualizarCategoriaTicketDto dto);
 }
 
 public class TicketService(HttpClient http) : ITicketService
@@ -131,4 +132,11 @@ public class TicketService(HttpClient http) : ITicketService
             return null;
         }
     }
+
+    public async Task<bool> ChangeTicketCategoriaAsync(int ticketId, ActualizarCategoriaTicketDto dto)
+    {
+        var message = await http.PutAsJsonAsync($"tickets/{ticketId}/categoria", dto, JsonConfig.Options);
+        return message.IsSuccessStatusCode;
+    }
+    
 }
