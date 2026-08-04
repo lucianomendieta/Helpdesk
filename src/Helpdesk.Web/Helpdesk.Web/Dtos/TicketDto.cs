@@ -14,7 +14,10 @@ public class TicketDto
     public string NombreCreador { get; set; } = string.Empty;
     public string? NombreAgente { get; set; }
     public PrioridadTicket Prioridad { get; set; }
-    public int? CategoriaId { get; set; }
     
+    //Categorias
+    public int? CategoriaId { get; set; }
+    public string? CategoriaNombre { get; set; }
+    public string? CategoriaIcono { get; set; }
 
 }

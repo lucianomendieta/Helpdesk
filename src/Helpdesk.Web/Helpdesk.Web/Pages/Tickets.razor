@@ -40,16 +40,27 @@
     </MudSelect>
 
     @*Filtro de agentes*@
-        <MudSelect T="int?"
-                    @bind-Value="agenteId"
-                    Placeholder="Todos los agentes">
-                    <MudSelectItem T="int?" Value="null">Todos los agentes</MudSelectItem>
-            @foreach (var agente in AgentesAsignados)
-            {
-                <MudSelectItem T="int?" Value="agente.AgenteAsignadoId">@agente.NombreAgente</MudSelectItem>
-            }
-        </MudSelect>
-
+    <MudSelect T="int?"
+               @bind-Value="agenteId"
+               Placeholder="Todos los agentes">
+        <MudSelectItem T="int?" Value="null">Todos los agentes</MudSelectItem>
+        @foreach (var agente in AgentesAsignados)
+        {
+            <MudSelectItem T="int?" Value="agente.AgenteAsignadoId">@agente.NombreAgente</MudSelectItem>
+        }
+    </MudSelect>
+    
+    @*Filtro de caetgorias*@
+    <MudSelect T="int?"
+               @bind-Value="categoriaId"
+               Placeholder="Todas las categorias">
+        <MudSelectItem T="int?" Value="null">Todas las categorias</MudSelectItem>
+        @foreach (var categoria in CategoriasPresentes)
+        {
+            <MudSelectItem T="int?" Value="categoria.CategoriaId">@categoria.CategoriaNombre</MudSelectItem>
+        }
+    </MudSelect>
+    
     <MudStack Row="true">
         <MudToggleGroup T="VistasTickets"
                         Value="vista"
@@ -72,7 +83,7 @@
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Titulo)">Titulo</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Descripcion)">Descripcion</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.CategoriaNombre)">Categoria</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaCreacion)">Fecha de Creacion</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreCreador)">Autor</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreAgente)">Asignado a</MudTableSortLabel></MudTh>
@@ -82,7 +93,19 @@
         <RowTemplate >
             <MudTd DataLabel="ID">@context.Id</MudTd>
             <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
-            <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
+            <MudTd DataLabel="Categoria">
+                @if (context.CategoriaId is null)
+                {
+                    <MudText>Sin categoria</MudText>
+                }
+                else
+                {
+                    <MudStack Row="true">
+                        <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.CategoriaIcono!)" Size="Size.Small" />
+                        <MudText>@context.CategoriaNombre</MudText>
+                    </MudStack>
+                }
+            </MudTd>
             <MudTd DataLabel="Fecha de Creacion">@context.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
             <MudTd DataLabel="Autor">@context.NombreCreador</MudTd>
             <MudTd DataLabel="Asignado a">@(context.NombreAgente ?? "Sin asignar")</MudTd>
@@ -90,10 +113,17 @@
                     <MudChip T="EstadoTicket">@context.Estado</MudChip>
             </MudTd>
             <MudTd DataLabel="Prioridad">
-                <MudStack Row="true">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@context.Prioridad.GetColor()" />
-                    <MudText>@context.Prioridad</MudText>
-                </MudStack>
+                @if (context.CategoriaId is null)
+                {
+                    <MudText> Sin categoria</MudText>
+                }
+                else
+                {
+                    <MudStack Row="true">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@context.Prioridad.GetColor()" Size="Size.Small"/>
+                        <MudText>@context.Prioridad</MudText>
+                    </MudStack>
+                }
             </MudTd>
             <MudTd @onclick:stopPropagation="true">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
@@ -138,6 +168,12 @@ else @*VISTA DE CARDS/TARJETAS*@
                                 <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket.Prioridad.GetColor()" />
                                 <MudText>@ticket.Prioridad</MudText>
                             </MudStack>
+                                @if (ticket.CategoriaId is not null)
+                                {
+                                    <MudChip T="string" Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(ticket.CategoriaIcono!)">
+                                        @ticket.CategoriaNombre
+                                    </MudChip>
+                                }
                             <MudDivider Class="my-2"/>
                             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudStack Row="true">
@@ -162,7 +198,8 @@ else @*VISTA DE CARDS/TARJETAS*@
     private string? busqueda;
     private EstadoTicket? estadoTicket;
     private int? agenteId;
-
+    private int? categoriaId;
+    
     //Seteo el parametro y enum para parametrizar el endpoint de tickets
     [Parameter, SupplyParameterFromQuery] public string? Asignacion { get; set; }
     private FiltroAsignacion filtroAsignacion = FiltroAsignacion.Todos;
@@ -270,10 +307,11 @@ else @*VISTA DE CARDS/TARJETAS*@
     //Propiedad para filtros
     private IEnumerable<TicketDto> TicketsFiltrados =>
         (tickets ?? [])
-            .Where(t => string.IsNullOrWhiteSpace(busqueda) || t.Titulo.Contains(busqueda!, StringComparison.OrdinalIgnoreCase))
-            .Where(t => estadoTicket is null || t.Estado == estadoTicket)
-            .Where(t => agenteId is null || t.AgenteAsignadoId == agenteId)
-            .Where(t => filtroAsignacion == FiltroAsignacion.Todos || t.AgenteAsignadoId is null);
+        .Where(t => string.IsNullOrWhiteSpace(busqueda) || t.Titulo.Contains(busqueda!, StringComparison.OrdinalIgnoreCase))
+        .Where(t => estadoTicket is null || t.Estado == estadoTicket)
+        .Where(t => agenteId is null || t.AgenteAsignadoId == agenteId)
+        .Where(t => filtroAsignacion == FiltroAsignacion.Todos || t.AgenteAsignadoId is null)
+        .Where(t => categoriaId is null || t.CategoriaId == categoriaId);
 
 
     //Propiedad para agentes ya asignados
@@ -281,5 +319,12 @@ else @*VISTA DE CARDS/TARJETAS*@
         (tickets ?? [])
             .Where(t => t.AgenteAsignadoId is not null)
             .DistinctBy(t => t.AgenteAsignadoId);
+    
+    //Propiedad para filtrar las categorias en la tabla
+    private IEnumerable<TicketDto> CategoriasPresentes =>
+        (tickets ?? [])
+        .Where(t => t.CategoriaId is not null)
+        .DistinctBy(t => t.CategoriaId);
+
 }
             
