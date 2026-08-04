@@ -41,8 +41,8 @@ public static class ConfiguracionEndpoints
 
     public static async Task<IResult> PutFechaVencimiento(HelpdeskDbContext contexto, ActualizarFechaVencimientoDto dto)
     {
-        var config = await contexto.ConfiguracionesEmpresa.FirstAsync(); 
-        
+        var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
+        config.UsarFechaVencimiento = dto.UsarFechaVencimiento!.Value;
         return Results.NoContent();
     }
     #endregion
