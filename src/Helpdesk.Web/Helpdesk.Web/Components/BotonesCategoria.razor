@@ -1,0 +1,32 @@
+﻿<MudGrid>
+    @if (Categorias is null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (!Categorias.Any())
+    {
+        <MudText Typo="Typo.body1" Color="Color.Error">No hay categorias disponibles. Contacta al administrador.</MudText>
+    }
+    else
+    {
+        @foreach (var categoria in Categorias)
+        {
+            <MudItem xs="12" sm="6" md="4" Class="pb-2">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           OnClick="() => OnSeleccionar.InvokeAsync(categoria)">
+                    <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(categoria.Icono)" Size="Size.Small" />
+                    <MudText Class="mt-1">@categoria.Nombre</MudText>
+                                
+                </MudButton>
+                            
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+@code {
+    [Parameter] public CategoriaResponseDto[]? Categorias { get; set; }
+    [Parameter] public EventCallback<CategoriaResponseDto> OnSeleccionar { get; set; }
+}

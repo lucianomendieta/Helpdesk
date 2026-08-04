@@ -16,43 +16,57 @@
         Crear Categoria
     </MudButton>
     
-    <MudTable T="CategoriaResponseDto"
-              Items="categorias ?? []"
-              Loading="categorias is null">
-        @*Cabeceras y titulos de tablas*@
-        <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)"> Icono </MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Nombre)"> Nombre </MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Descripcion!)"> Descripcion </MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.PrioridadSugerida)"> Prioridad Sugerida </MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Activa)"> Estado </MudTableSortLabel></MudTh>
-            <MudTh> Acciones </MudTh>
+    <MudGrid >
+        <MudItem xs="12" md="8">
+            <MudTable T="CategoriaResponseDto"
+                  Items="categorias ?? []"
+                  Loading="categorias is null">
+                @*Cabeceras y titulos de tablas*@
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)"> Icono </MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Nombre)"> Nombre </MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Descripcion!)"> Descripcion </MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.PrioridadSugerida)"> Prioridad Sugerida </MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Activa)"> Estado </MudTableSortLabel></MudTh>
+                    <MudTh> Acciones </MudTh>
 
-        </HeaderContent>
-        @*Aca van los datos para la tabla*@
-        <RowTemplate>
-            <MudTd><MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)"/></MudTd>
-            <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
-            <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
-            <MudTd DataLabel="Prioridad Sugerida">@context.PrioridadSugerida</MudTd>
-            <MudTd DataLabel="Estado">@(context.Activa ? "Activa" : "Inactiva")</MudTd>
-            <MudTd DataLabel="Acciones">
-                
-                <MudIconButton Icon="@(context.Activa ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
-                               Disabled="context.EsDelSistema"
-                               OnClick="() => ToggleEstadoAsync(context)"/>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                               OnClick="() => EditCategoriaAsync(context)"/> 
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+                </HeaderContent>
+                @*Aca van los datos para la tabla*@
+                <RowTemplate>
+                    <MudTd><MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.Icono)"/></MudTd>
+                    <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+                    <MudTd DataLabel="Descripcion">@context.Descripcion</MudTd>
+                    <MudTd DataLabel="Prioridad Sugerida">@context.PrioridadSugerida</MudTd>
+                    <MudTd DataLabel="Estado">@(context.Activa ? "Activa" : "Inactiva")</MudTd>
+                    <MudTd DataLabel="Acciones">
+
+                        <MudIconButton Icon="@(context.Activa ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                       Disabled="context.EsDelSistema"
+                                       OnClick="() => ToggleEstadoAsync(context)"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       OnClick="() => EditCategoriaAsync(context)"/>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudItem>
+        
+        @*Side pannel con vista en vivo*@
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.overline" Color="Color.Secondary">Así lo ve el cliente ↓</MudText>
+                <BotonesCategoria Categorias="CategoriasActivas" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 </MudContainer>
 
 
 
 @code {
     private CategoriaResponseDto[]? categorias;
-
+    
+    //Filtro las categorias activas
+    private CategoriaResponseDto[]? CategoriasActivas => categorias?.Where(c => c.Activa).ToArray();
     //Inicializo los datos:
     protected override async Task OnInitializedAsync()
     {
