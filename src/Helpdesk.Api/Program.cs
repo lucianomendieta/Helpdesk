@@ -156,5 +156,6 @@ app.MapAuthEndpoints();
 app.MapTicketDetalleEndpoints();
 app.MapAdjuntoEndpoints();
 app.MapCategoriaEndpoints();
+app.MapConfiguracionEndpoints();
 
 app.Run();

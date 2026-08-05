@@ -13,6 +13,12 @@ public static class ConfiguracionEndpoints
             .WithTags("Configuracion")
             .RequireAuthorization();
 
+        group.MapGet("/", GetConfiguracion);
+        group.MapPut("/nombre-empresa", PutNombreEmpresa)
+            .RequireAuthorization("SoloAdmins");
+        group.MapPut("/fecha-vencimiento", PutFechaVencimiento)
+            .RequireAuthorization("SoloAdmins");
+
         return app;
     }
 
@@ -27,13 +33,13 @@ public static class ConfiguracionEndpoints
 
     #endregion
 
-    #region PutNombreEmpresa
+    #region Puts
 
     //Actualizo el nombre de la empresa
     public static async Task<IResult> PutNombreEmpresa(HelpdeskDbContext contexto, ActualizarNombreEmpresaDto dto)
     {
         var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
-        var nombre = config.NombreEmpresa;
+        config.NombreEmpresa = dto.NombreEmpresa;
         //Guardo el nombre
         await contexto.SaveChangesAsync();
         return Results.NoContent();
@@ -43,6 +49,7 @@ public static class ConfiguracionEndpoints
     {
         var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
         config.UsarFechaVencimiento = dto.UsarFechaVencimiento!.Value;
+        await contexto.SaveChangesAsync();
         return Results.NoContent();
     }
     #endregion
