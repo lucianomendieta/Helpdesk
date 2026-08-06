@@ -19,6 +19,7 @@ public interface ITicketService
     Task<TicketsStatsDto?> GetTicketsStatsAsync();
     Task<TicketDto[]?> GetTicketsRecientesAsync();
     Task<bool> ChangeTicketCategoriaAsync(int ticketId, ActualizarCategoriaTicketDto dto);
+    Task<bool> ChangeTicketVencimientoAsync(int ticketId, ActualizarVencimientoTicketDto dto);
 }
 
 public class TicketService(HttpClient http) : ITicketService
@@ -139,4 +140,10 @@ public class TicketService(HttpClient http) : ITicketService
         return message.IsSuccessStatusCode;
     }
     
+    //actualizo la fecha de vencimiento
+    public async Task<bool> ChangeTicketVencimientoAsync(int ticketId, ActualizarVencimientoTicketDto dto)
+    {
+        var message = await http.PutAsJsonAsync($"tickets/{ticketId}/vencimiento", dto, JsonConfig.Options);
+        return message.IsSuccessStatusCode;
+    }
 }

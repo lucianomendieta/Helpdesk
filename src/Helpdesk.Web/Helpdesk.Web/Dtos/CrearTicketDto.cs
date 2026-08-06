@@ -8,4 +8,5 @@ public class CrearTicketDto
     public string Descripcion { get; set; } = string.Empty;
     public PrioridadTicket Prioridad { get; set; } = PrioridadTicket.Media;
     public int CategoriaId { get; set; }
+    public DateTimeOffset? FechaVencimiento { get; set; }
 }

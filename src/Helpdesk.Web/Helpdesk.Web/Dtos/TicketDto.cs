@@ -19,5 +19,8 @@ public class TicketDto
     public int? CategoriaId { get; set; }
     public string? CategoriaNombre { get; set; }
     public string? CategoriaIcono { get; set; }
+    
+    //Vencimiento
+    public DateTimeOffset? FechaVencimiento { get; set; }
 
 }

@@ -11,4 +11,5 @@ public class CategoriaResponseDto
     public PrioridadTicket PrioridadSugerida { get; set; }
     public bool Activa { get; set; }
     public bool EsDelSistema { get; set; }
+    public int? DiasVencimiento { get; set; }
 }
