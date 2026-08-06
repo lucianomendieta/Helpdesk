@@ -7,6 +7,7 @@
 @inject ICategoriaService categoriaService;
 @inject IDialogService dialogService;
 @inject ISnackbar snackbar;
+@inject IConfiguracionService configuracionservice;
 
 <MudContainer>
     
@@ -19,8 +20,8 @@
     <MudGrid >
         <MudItem xs="12" md="8">
             <MudTable T="CategoriaResponseDto"
-                  Items="categorias ?? []"
-                  Loading="categorias is null">
+                      Items="categorias ?? []"
+                      Loading="categorias is null">
                 @*Cabeceras y titulos de tablas*@
                 <HeaderContent>
                     <MudTh><MudTableSortLabel SortBy="new Func<CategoriaResponseDto, object>(x => x.Icono)"> Icono </MudTableSortLabel></MudTh>
@@ -58,12 +59,35 @@
             </MudPaper>
         </MudItem>
     </MudGrid>
+    @* Check de uso de fecha de vencimiento *@
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6">Preferencias de tickets</MudText>
+        <MudSwitch T="bool"
+                   Value="configuracion?.UsarFechaVencimiento ?? false"
+                   ValueChanged="ToggleFechaVencimientoAsync"
+                   Disabled="configuracion is null"
+                   Label="Usar Fecha de vencimiento"
+                   Color="Color.Primary"/>
+    </MudPaper>
+    @* Nombre de la empresa *@
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6">Empresa</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudTextField T="string" @bind-Value="nombreEmpresaEditable" Label="Nombre de la empresa" Immediate="true" />
+            <MudButton OnClick="GuardarNombreEmpresaAsync"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="nombreEmpresaEditable == configuracion?.NombreEmpresa">Guardar</MudButton>
+        </MudStack>
+    </MudPaper>
 </MudContainer>
 
 
 
 @code {
     private CategoriaResponseDto[]? categorias;
+    private ConfiguracionResponseDto? configuracion;
+    private string nombreEmpresaEditable = string.Empty;
     
     //Filtro las categorias activas
     private CategoriaResponseDto[]? CategoriasActivas => categorias?.Where(c => c.Activa).ToArray();
@@ -71,6 +95,8 @@
     protected override async Task OnInitializedAsync()
     {
         categorias = await categoriaService.GetCategoriasAsync();
+        configuracion = await configuracionservice.GetConfiguracionAsync();
+        nombreEmpresaEditable = configuracion?.NombreEmpresa ?? string.Empty;
     }
     
     
@@ -103,6 +129,7 @@
         }
     }
 
+    //editar categoria
     private async Task EditCategoriaAsync(CategoriaResponseDto categoria)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
@@ -115,5 +142,36 @@
         var result = await dialog.Result;
     }
     
+    //toggle de estado de uso fecha vencimiento en tickets
+    private async Task ToggleFechaVencimientoAsync(bool nuevo)
+    {
+        var dto = new ActualizarFechaVencimientoDto { UsarFechaVencimiento = nuevo };
+        var resultado = await configuracionservice.UpdateFechaVencimientoAsync(dto);
+
+        if (resultado.Exito)
+        {
+            configuracion.UsarFechaVencimiento = nuevo;
+        }
+        else
+        {
+            snackbar.Add("No se pudo actualizar la preferencia", Severity.Error);
+        }
+    }
+    
+    //Guardo el nombre de empresa
+    private async Task GuardarNombreEmpresaAsync()
+    {
+        var dto = new ActualizarNombreEmpresaDto { NombreEmpresa = nombreEmpresaEditable };
+        var resultado = await configuracionservice.UpdateNombreEmpresaAsync(dto);
+        if (resultado.Exito)
+        {
+            configuracion!.NombreEmpresa = nombreEmpresaEditable;
+            snackbar.Add("Nombre Actualizado", Severity.Success);
+        }
+        else
+        {
+            snackbar.Add(resultado.Error ?? "No se pudo actualizar el nombre", Severity.Error);
+        }
+    }
     
 }

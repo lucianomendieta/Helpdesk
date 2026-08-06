@@ -61,6 +61,9 @@ builder.Services.AddScoped<AdjuntoInterop>();
 //Servicio de categorias
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 
+//Servicio de configuraciones
+builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
