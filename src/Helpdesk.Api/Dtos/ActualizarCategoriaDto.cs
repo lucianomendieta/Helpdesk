@@ -15,5 +15,7 @@ public record ActualizarCategoriaDto
     [property: Required]
     string Icono,
 
-    PrioridadTicket PrioridadSugerida
+    PrioridadTicket PrioridadSugerida,
+    
+    [property: Range(1, int.MaxValue)] int? DiasVencimiento
     );

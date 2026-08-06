@@ -49,7 +49,8 @@ public static class CategoriaEndpoints
             c.Icono,
             c.PrioridadSugerida,
             c.Activa,
-            c.EsDelSistema
+            c.EsDelSistema,
+            c.DiasVencimiento
             )).ToListAsync());
     }
 
@@ -66,7 +67,8 @@ public static class CategoriaEndpoints
             c.Icono,
             c.PrioridadSugerida,
             c.Activa,
-            c.EsDelSistema
+            c.EsDelSistema,
+            c.DiasVencimiento
             )).ToListAsync());
     }
     #endregion
@@ -103,7 +105,8 @@ public static class CategoriaEndpoints
             nuevo.Icono,
             nuevo.PrioridadSugerida,
             nuevo.Activa,
-            nuevo.EsDelSistema
+            nuevo.EsDelSistema,
+            nuevo.DiasVencimiento
             );
 
         return Results.Created($"/categorias/{nuevo.Id}", respuesta);
@@ -123,6 +126,7 @@ public static class CategoriaEndpoints
         categoria.Descripcion = dto.Descripcion;
         categoria.Icono = dto.Icono;
         categoria.PrioridadSugerida = dto.PrioridadSugerida;
+        categoria.DiasVencimiento = dto.DiasVencimiento;
 
         //Guardo la actualizacion
         await contexto.SaveChangesAsync();

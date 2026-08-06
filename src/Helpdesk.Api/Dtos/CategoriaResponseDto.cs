@@ -10,5 +10,6 @@ public record CategoriaResponseDto
     string Icono,
     PrioridadTicket PrioridadSugerida,
     bool Activa,
-    bool EsDelSistema
+    bool EsDelSistema,
+    int? DiasVencimiento
     );

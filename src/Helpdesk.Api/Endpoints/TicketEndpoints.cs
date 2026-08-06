@@ -31,6 +31,8 @@ public static class TicketEndpoints
             .RequireAuthorization("SoloPersonal");
         group.MapPut("/{ticketId}/categoria", ChangeCategoryTicket)
             .RequireAuthorization("SoloPersonal");
+        group.MapPut("{ticketId}/vencimiento", PutFechaVencimiento)
+            .RequireAuthorization("SoloPersonal");
         //Deletes
         group.MapDelete("/{id}", DeleteTicket)
             .RequireAuthorization("SoloAdmins");
@@ -69,7 +71,8 @@ public static class TicketEndpoints
                                                         t.Prioridad,
                                                         t.CategoriaId,
                                                         t.Categoria == null ? null : t.Categoria.Nombre,
-                                                        t.Categoria == null ? null : t.Categoria.Icono)).ToListAsync());
+                                                        t.Categoria == null ? null : t.Categoria.Icono,
+                                                        t.FechaVencimiento)).ToListAsync());
     }
 
     //Get ticket por ID
@@ -90,7 +93,8 @@ public static class TicketEndpoints
                 t.Prioridad,
                 t.CategoriaId,
                 t.Categoria == null ? null : t.Categoria.Nombre,
-                t.Categoria == null ? null : t.Categoria.Icono)).FirstOrDefaultAsync();
+                t.Categoria == null ? null : t.Categoria.Icono,
+                t.FechaVencimiento)).FirstOrDefaultAsync();
         var rol = http.User.FindFirstValue(ClaimTypes.Role);
         var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -190,7 +194,8 @@ public static class TicketEndpoints
                     t.Prioridad,
                     t.CategoriaId,
                     t.Categoria == null ? null : t.Categoria.Nombre,
-                    t.Categoria == null ? null : t.Categoria.Icono)).ToListAsync(); //Devuelvo el response en el formato conocido
+                    t.Categoria == null ? null : t.Categoria.Icono,
+                    t.FechaVencimiento)).ToListAsync(); //Devuelvo el response en el formato conocido
         return Results.Ok(filtrados);
     }
 
@@ -200,19 +205,30 @@ public static class TicketEndpoints
     private static async Task<IResult> PostTicket(CrearTicketDto dto, HelpdeskDbContext contexto, HttpContext http)
     {
         var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+        var rol = http.User.FindFirstValue(ClaimTypes.Role);
+        var esPersonal = rol is "Agente" or "Analista" or "Administrador" or "Gerente";
+        
         if (usuario is null)
         {
             return Results.Unauthorized();
         }
 
+        //Leo si esta habilitado la config
+        var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
+        
+        //Creo la variable para la iteracion
+        Categoria? cat = null;
+        
         //valido que haya venido categoria, que exista y que este activa
         if (dto.CategoriaId is not null)
         {
-            bool ok = await contexto.Categorias.AnyAsync(c => c.Id == dto.CategoriaId && c.Activa);
-            if (!ok) { return Results.BadRequest("La categoria no existe o esta inactiva"); }
+            cat = await contexto.Categorias.FirstOrDefaultAsync(c => c.Id == dto.CategoriaId && c.Activa);
+            if (cat is null) { return Results.BadRequest("La categoria no existe o esta inactiva"); }
         }
-
+        
+        //Defino el automatico desde la categoria === Funcion helper
+        DateTimeOffset? autoDesdeCategoria(DateTimeOffset fechacreacion, int? DiasVencimiento) 
+            => DiasVencimiento is null ? null : fechacreacion.AddDays(DiasVencimiento.Value);
 
         Ticket nuevo = new()
         {
@@ -220,8 +236,19 @@ public static class TicketEndpoints
             Titulo = dto.Titulo,
             Descripcion = dto.Descripcion,
             Prioridad = dto.Prioridad ?? PrioridadTicket.Media,
-            CategoriaId = dto.CategoriaId
+            CategoriaId = dto.CategoriaId,
         };
+        
+        //Si el toggle esta prendido agregamos fecha de vencimiento
+        if (config.UsarFechaVencimiento)
+        {
+            nuevo.FechaVencimiento =
+                (esPersonal ? dto.FechaVencimiento : null) ?? autoDesdeCategoria(nuevo.FechaCreacion, cat?.DiasVencimiento);
+        }
+        else
+        {
+            nuevo.FechaVencimiento = null;
+        }
 
         contexto.Tickets.Add(nuevo);
         await contexto.SaveChangesAsync();
@@ -240,7 +267,8 @@ public static class TicketEndpoints
                 t.Prioridad,
                 t.CategoriaId,
                 t.Categoria == null ? null : t.Categoria.Nombre,
-                t.Categoria == null ? null : t.Categoria.Icono
+                t.Categoria == null ? null : t.Categoria.Icono,
+                t.FechaVencimiento
                 )).FirstAsync());
     }
 
@@ -425,6 +453,51 @@ public static class TicketEndpoints
 
         ticket.CategoriaId = dto.CategoriaId;
 
+        //Guardo la actualizacion correcta
+        await contexto.SaveChangesAsync();
+        return Results.NoContent();
+    }
+
+
+    private static async Task<IResult> PutFechaVencimiento(int ticketId, HelpdeskDbContext contexto,
+        ActualizarVencimientoTicketDto dto, HttpContext http)
+    {
+        #region Validacion del usuario y rol
+        var rol = http.User.FindFirstValue(ClaimTypes.Role);
+        //Verifico si el usuario a chequear existe
+        var usuario = http.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuario is null)
+        {
+            return Results.Unauthorized();
+        }
+        //Parse a int
+        var usuarioInt = int.Parse(usuario);
+        //Verifico si el ticket existe
+        var ticket = await contexto.Tickets.FindAsync(ticketId);
+        if (ticket is null)
+        {
+            return Results.NotFound();
+        }
+
+        //Si no puede editar, forbid
+        if (!TicketPermisos.PuedeGestionar(ticket, rol, usuarioInt))
+        {
+            return Results.Forbid();
+        }
+        #endregion
+
+        //Leo si esta habilitado la config
+        var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
+
+        if (config.UsarFechaVencimiento)
+        {
+            ticket.FechaVencimiento = dto.FechaVencimiento;  //Se permite null
+        }
+        else
+        {
+            return Results.BadRequest("No se esta utilizando la fecha de vencimiento");
+        }
+        
         //Guardo la actualizacion correcta
         await contexto.SaveChangesAsync();
         return Results.NoContent();

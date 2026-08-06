@@ -9,5 +9,6 @@ public class Categoria
     public PrioridadTicket PrioridadSugerida { get; set; } = PrioridadTicket.Media;
     public bool Activa { get; set; } = true;
     public bool EsDelSistema { get; set; } = false;
+    public int? DiasVencimiento { get; set; }
 
 }

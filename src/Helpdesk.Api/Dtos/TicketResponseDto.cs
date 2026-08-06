@@ -17,5 +17,6 @@ public record TicketResponseDto
     PrioridadTicket Prioridad,
     int? CategoriaId,
     string? CategoriaNombre,
-    string? CategoriaIcono
+    string? CategoriaIcono,
+    DateTimeOffset? FechaVencimiento
     );

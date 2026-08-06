@@ -9,9 +9,6 @@ public record CrearTicketDto(
     string Titulo,
     [property: Required(ErrorMessage = "Ingrese una descripcion")]
     string Descripcion,
-
+    DateTimeOffset? FechaVencimiento,
     PrioridadTicket? Prioridad = PrioridadTicket.Media,
-
-    int? CategoriaId = null
-    
-    );
+    int? CategoriaId = null);

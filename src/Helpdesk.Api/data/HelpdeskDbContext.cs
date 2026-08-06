@@ -106,7 +106,8 @@ public class HelpdeskDbContext : DbContext
                 Icono = "HelpOutline",
                 EsDelSistema = true,
                 Activa = true,
-                PrioridadSugerida = PrioridadTicket.Media
+                PrioridadSugerida = PrioridadTicket.Media,
+                DiasVencimiento = null
             });
 
         modelBuilder.Entity<ConfiguracionEmpresa>()

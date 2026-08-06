@@ -37,6 +37,9 @@ namespace Helpdesk.Api.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int?>("DiasVencimiento")
+                        .HasColumnType("int");
+
                     b.Property<bool>("EsDelSistema")
                         .HasColumnType("bit");
 
