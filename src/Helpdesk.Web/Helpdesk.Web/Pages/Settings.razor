@@ -89,6 +89,7 @@
     private ConfiguracionResponseDto? configuracion;
     private string nombreEmpresaEditable = string.Empty;
     
+    
     //Filtro las categorias activas
     private CategoriaResponseDto[]? CategoriasActivas => categorias?.Where(c => c.Activa).ToArray();
     //Inicializo los datos:
@@ -104,7 +105,12 @@
     private async Task OpenDialogAsync()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-        var dialog = await dialogService.ShowAsync<CrearCategoriaDialog>("Nueva categoria", options);
+        DialogParameters<CrearCategoriaDialog> parameters = new()
+        {
+            { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
+        };
+        var dialog = await dialogService.ShowAsync<CrearCategoriaDialog>("Nueva categoria",parameters, options);
+        
         
         var result = await dialog.Result;
         if (result?.Data is CategoriaResponseDto nuevo)
@@ -135,7 +141,8 @@
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         DialogParameters<CrearCategoriaDialog> parameters = new()
         {
-            { x => x.categoriaExistente, categoria }
+            { x => x.categoriaExistente, categoria },
+            { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
         };
 
         var dialog = await dialogService.ShowAsync<CrearCategoriaDialog>("Editar categoria", parameters, options);

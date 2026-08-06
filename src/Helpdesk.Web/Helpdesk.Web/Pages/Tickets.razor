@@ -12,6 +12,7 @@
 @inject ISnackbar snackbar;
 @inject NavigationManager navigationManager;
 @inject ILocalStorageService storage;
+@inject IConfiguracionService ConfiguracionService;
 
 @attribute [Authorize]
     
@@ -204,6 +205,10 @@ else @*VISTA DE CARDS/TARJETAS*@
     [Parameter, SupplyParameterFromQuery] public string? Asignacion { get; set; }
     private FiltroAsignacion filtroAsignacion = FiltroAsignacion.Todos;
 
+    //seteo la configuracion de la entidad
+    private ConfiguracionResponseDto? configuracion;
+    
+    
     private enum FiltroAsignacion
     {
         Todos,
@@ -214,6 +219,7 @@ else @*VISTA DE CARDS/TARJETAS*@
     protected override async Task OnInitializedAsync()
     {
         tickets = await ticketService.GetTicketsAsync();
+        configuracion = await ConfiguracionService.GetConfiguracionAsync();
         if(string.Equals(Asignacion, "sinasignar", StringComparison.OrdinalIgnoreCase)) //Si la asignacion es sin asignar se agrega al filtro
         {
             filtroAsignacion = FiltroAsignacion.SinAsignar;
@@ -228,8 +234,12 @@ else @*VISTA DE CARDS/TARJETAS*@
     private async Task OpenDialogAsync()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Medium, FullWidth=true };
-
-        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", options);
+        DialogParameters<CrearTicketDialog> parameters = new()
+        {
+            { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
+        };
+        
+        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", parameters, options);
 
         var result = await dialog.Result;
         if (result?.Data is TicketDto nuevo)

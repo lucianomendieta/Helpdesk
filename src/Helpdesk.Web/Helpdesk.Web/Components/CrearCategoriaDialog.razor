@@ -20,12 +20,21 @@
                 <MudTextField T="string" Label="Nombre de categoria" @bind-Value="dto.Nombre" Required="true" RequiredError="Ingrese el nombre de la categoria" />
             </MudStack>
             <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" />
-            <MudSelect T="PrioridadTicket?" Label="Prioridad Sugerida" @bind-Value="dto.PrioridadSugerida">
-                @foreach (var prioridad in Enum.GetValues<PrioridadTicket>())
+            @*Stackeo el select de categoria y el contador de dias hasta vencimiento*@
+            <MudStack Row="true">
+                <MudSelect T="PrioridadTicket?" Label="Prioridad Sugerida" @bind-Value="dto.PrioridadSugerida">
+                    @foreach (var prioridad in Enum.GetValues<PrioridadTicket>())
+                    {
+                        <MudSelectItem T="PrioridadTicket?" Value="prioridad"> @prioridad</MudSelectItem>
+                    }
+                </MudSelect>
+                
+                @if (usarFechaVencimiento)
                 {
-                    <MudSelectItem T="PrioridadTicket?" Value="prioridad"> @prioridad</MudSelectItem>
+                    <MudNumericField T="int?" @bind-Value="dto.DiasVencimiento" Min="1" HelperText="Vacio = sin vencimiento" />
                 }
-            </MudSelect>
+            </MudStack>
+            
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -41,7 +50,9 @@
     
     //Esta en edicion?
     [Parameter] public CategoriaResponseDto? categoriaExistente { get; set; }
-
+    //Paso el parametro del switch
+    [Parameter] public bool usarFechaVencimiento { get; set; }
+    
     private MudForm form;
     private bool IsValid;
     private CrearCategoriaDto dto = new()
@@ -58,7 +69,8 @@
                 Nombre = categoriaExistente.Nombre,
                 Descripcion = categoriaExistente.Descripcion,
                 Icono = categoriaExistente.Icono,
-                PrioridadSugerida = categoriaExistente.PrioridadSugerida
+                PrioridadSugerida = categoriaExistente.PrioridadSugerida,
+                DiasVencimiento = categoriaExistente.DiasVencimiento
             };
         }
     }
@@ -75,10 +87,11 @@
         {
             var dtoActualizar = new ActualizarCategoriaDto()
             {
-                Nombre = categoriaExistente.Nombre,
-                Descripcion = categoriaExistente.Descripcion,
-                Icono = categoriaExistente.Icono,
-                PrioridadSugerida = categoriaExistente.PrioridadSugerida
+                Nombre = dto.Nombre,
+                Descripcion = dto.Descripcion,
+                Icono = dto.Icono,
+                PrioridadSugerida = dto.PrioridadSugerida!.Value,
+                DiasVencimiento = dto.DiasVencimiento
             };
             var resultado = await categoriaService.UpdateCategoriaAsync(categoriaExistente.Id, dtoActualizar);
             if (resultado.Exito)
@@ -87,6 +100,7 @@
                 categoriaExistente.Descripcion = dtoActualizar.Descripcion;
                 categoriaExistente.Icono = dtoActualizar.Icono;
                 categoriaExistente.PrioridadSugerida = dtoActualizar.PrioridadSugerida;
+                categoriaExistente.DiasVencimiento = dtoActualizar.DiasVencimiento;
                 
                 MudDialog.Close(DialogResult.Ok(categoriaExistente));
             }

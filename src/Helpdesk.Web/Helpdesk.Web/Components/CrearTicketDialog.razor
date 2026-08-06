@@ -32,24 +32,31 @@
                 <MudTextField T="string" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"/>
                 <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                     
-                    @* Selects de categorias o de prioridades para un staff*@
+                    @* Selects de categorias y fechas para el staff*@
                     <MudStack Row="true">
                         <MudSelect T="int" Label="Categoria" @bind-Value="dto.CategoriaId">
                             @if (categorias is not null)
                             {
                                 @foreach (var c in categorias)
                                 {
-                                <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                                    <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
                                 }
                             }
                         </MudSelect>
-                        <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad">
-                            @foreach (var p in Enum.GetValues<PrioridadTicket>())
-                            {
-                                <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
-                            }
-                        </MudSelect>
+                        @*Solo si esta activado mostramos*@
+                        @if (usarFechaVencimiento)
+                        {
+                            <MudDatePicker @bind-Date="fechaSeleccionada" Label="Fecha de Vencimiento"/> 
+                        }
+                        
                     </MudStack>
+                    @* Select de prioridades del ticket*@
+                    <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad">
+                        @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                        {
+                            <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                        }
+                    </MudSelect>
 
                 </AuthorizeView>
                 <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5 * 1024 * 1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
@@ -94,16 +101,25 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
-
+    private MudForm form;
     [CascadingParameter] private Task<AuthenticationState> AuthstateTask { get; set; } = null!;
     
+    //archivos
     private MudFileUpload<IReadOnlyList<IBrowserFile>> fileUpload = default!;
     private IReadOnlyList<IBrowserFile>? archivos;
+    //Dto para ticket
+    private CrearTicketDto dto = new();
+    
+    //Estados
     private bool enviando;
-    private MudForm form;
     private bool IsValid;
     private bool esCliente;
-    private CrearTicketDto dto = new();
+    
+    //Fecha de vencimiento
+    [Parameter] public bool usarFechaVencimiento { get; set; }
+    private DateTime? fechaSeleccionada;
+    
+    
     //Fases de cliente
     private int paso = 1;
     private CategoriaResponseDto[]? categorias;
@@ -160,6 +176,14 @@
         enviando = true;
         try
         {
+            //Parseo la fecha de date time a date time offset
+            if (fechaSeleccionada is not null)
+            {
+                dto.FechaVencimiento = new DateTimeOffset(
+                    fechaSeleccionada.Value, 
+                    TimeZoneInfo.Local.GetUtcOffset(fechaSeleccionada.Value));
+            }
+            
             ResultadoApi<TicketDto> created = await TicketService.CreateTicketAsync(dto);
             if (!created.Exito)
             {

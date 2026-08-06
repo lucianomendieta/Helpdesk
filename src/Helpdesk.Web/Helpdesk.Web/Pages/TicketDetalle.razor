@@ -14,6 +14,7 @@
 @inject IUsuarioService usuarioService;
 @inject NavigationManager navigationManager;
 @inject ICategoriaService CategoriaService;
+@inject IConfiguracionService ConfiguracionService;
 
 @attribute [Authorize]
 @page "/tickets/{Id:int}"
@@ -110,67 +111,93 @@ else
         </MudItem>
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-4">
-                    <MudText Class="mt-3" Typo="Typo.overline" Color="Color.Secondary">Detalles</MudText>
-                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Cliente</MudText>
-                    <MudText Class="mt-3" Typo="Typo.body1">@ticket?.NombreCreador</MudText>
-                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Creado</MudText>
-                    <MudText Class="mt-3" Typo="Typo.body1">@ticket?.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
-                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Estado</MudText>
+                <MudText Class="mt-3" Typo="Typo.overline" Color="Color.Secondary">Detalles</MudText>
+                @*Nombre del cliente*@
+                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Cliente</MudText>
+                <MudText Class="mt-3" Typo="Typo.body1">@ticket?.NombreCreador</MudText>
+                
+                @*Creado en fecha:*@
+                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de creacion</MudText>
+                <MudText Class="mt-3" Typo="Typo.body1">@ticket?.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
+            
+                @*Fecha de vencimiento (si tiene)*@
+                @if (configuracion!.UsarFechaVencimiento)
+                {
+                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de vencimiento</MudText>
                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                         <Authorized>
-                            <MudSelect T="EstadoTicket" Value="ticket!.Estado" ValueChanged="ChangeEstadoAsync">
-                                @foreach (var estado in Enum.GetValues<EstadoTicket>())
-                                {
-                                    <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
-                                }
-                            </MudSelect>
+                            <MudDatePicker Date="" DateChanged="" />
                         </Authorized>
                         <NotAuthorized>
-                            <MudChip T="string">@ticket?.Estado</MudChip>
+                            <MudText Class="mt-2" Color="Color.Secondary" Typo="Typo.body1">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
                         </NotAuthorized>
                     </AuthorizeView>
-                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Prioridad</MudText>
-                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                        <Authorized>
-                            <MudSelect T="PrioridadTicket" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
-                                @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                }
+                
+                @*ESTADO DEL TICKET*@
+                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Estado</MudText>
+                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                    <Authorized>
+                        <MudSelect T="EstadoTicket" Value="ticket!.Estado" ValueChanged="ChangeEstadoAsync">
+                            @foreach (var estado in Enum.GetValues<EstadoTicket>())
+                            {
+                                <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudChip T="string">@ticket?.Estado</MudChip>
+                    </NotAuthorized>
+                </AuthorizeView>
+                
+                @*PRIORIDAD*@
+                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Prioridad</MudText>
+                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                    <Authorized>
+                        <MudSelect T="PrioridadTicket" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
+                            @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                            {
+                                <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudStack Row="true">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()" />
+                            <MudText>@ticket!.Prioridad</MudText>
+                        </MudStack>
+                    </NotAuthorized>
+                </AuthorizeView>
+                
+                    @*ASIGNACION DE AGENTES*@
+                <AuthorizeView Roles="Administrador,Gerente">
+                    <Authorized>
+                        <MudSelect T="int?" Label="Agente" Value="ticket!.AgenteAsignadoId" ValueChanged="AsignarAgenteAsync">
+                            <MudSelectItem T="int?" Value="@((int?)null)">Sin asignar</MudSelectItem>
+                            @foreach (var agente in agentes ?? [])
+                            {
+                                <MudSelectItem T="int?" Value="@agente.Id">@agente.NombrePila @agente.ApellidoPila</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </Authorized>
+                </AuthorizeView>
+                
+                    @*SELECT DE CATEGORIAS*@
+                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                    <Authorized>
+                        <MudSelect T="int?" Label="Categoria" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
+                            @if (categorias is not null)
+                            {
+                                @foreach (var c in categorias)
                                 {
-                                    <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                                    <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
                                 }
-                            </MudSelect>
-                        </Authorized>
-                        <NotAuthorized>
-                            <MudStack Row="true">
-                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()" />
-                                <MudText>@ticket!.Prioridad</MudText>
-                            </MudStack>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                    <AuthorizeView Roles="Administrador,Gerente">
-                        <Authorized>
-                            <MudSelect T="int?" Label="Agente" Value="ticket!.AgenteAsignadoId" ValueChanged="AsignarAgenteAsync">
-                                <MudSelectItem T="int?" Value="@((int?)null)">Sin asignar</MudSelectItem>
-                                @foreach (var agente in agentes ?? [])
-                                {
-                                    <MudSelectItem T="int?" Value="@agente.Id">@agente.NombrePila @agente.ApellidoPila</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </Authorized>
-                    </AuthorizeView>
-                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                        <Authorized>
-                            <MudSelect T="int?" Label="Categoria" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
-                                @if (categorias is not null)
-                                {
-                                    @foreach (var c in categorias)
-                                    {
-                                        <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
-                                    }
-                                }
-                            </MudSelect>       
-                        </Authorized>
-                    </AuthorizeView>
-                </MudPaper>
+                            }
+                        </MudSelect>       
+                    </Authorized>
+                </AuthorizeView>
+                
+            </MudPaper>
         </MudItem>
     </MudGrid>
 }
@@ -180,25 +207,33 @@ else
     private bool isvalid;
     private MudForm form;
 
+    //Parametros
     [Parameter] 
     public int Id { get; set; }
 
+    [CascadingParameter]
+    public Task<AuthenticationState>? authstateTask { get; set; }
+    
+    //Dtos
     private TicketDto? ticket;
     private TicketDetalleResponseDto[]? ticketDetalles;
     private UsuarioDto[]? agentes;
-
     private CrearTicketDetalleDto detalleDto = new ();
     private CategoriaResponseDto[]? categorias;
+    
+    //Estados
     private EstadoResponse? estadoResponse;
 
-    [CascadingParameter]
-    public Task<AuthenticationState>? authstateTask { get; set; }
+    //configuracion
+    private ConfiguracionResponseDto? configuracion;
+    
 
     protected override async Task OnInitializedAsync()
     {
         var resultado = await ticketService.GetTicketAsync(Id);
         estadoResponse = resultado.Estado;
         ticket = resultado.Ticket;
+        configuracion = await ConfiguracionService.GetConfiguracionAsync();
         
 
         if (estadoResponse == EstadoResponse.Ok)
@@ -305,5 +340,22 @@ else
             snackbar.Add("No se pudo editar la categoria del ticket", Severity.Error);
         }
 
-}
+    }
+    
+    //cambio la fecha de vencimiento del ticket
+    private async Task ChangeVencimientoAsync(DateTime? fechaNueva)
+    {
+        if (fechaNueva is null)
+        {
+            ticket.FechaVencimiento = null;
+        }
+        else
+        {
+            var dto = new ActualizarVencimientoTicketDto()
+            {
+                FechaVencimiento = new DateTimeOffset(fechaNueva.Value, TimeZoneInfo.Local.GetUtcOffset(fechaNueva.Value)) 
+            };
+        }
+        
+    }
 }

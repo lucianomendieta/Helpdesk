@@ -7,6 +7,7 @@
 @inject ISnackbar snackbar;
 @inject IDialogService dialogService;
 @inject NavigationManager navigation;
+@inject IConfiguracionService ConfiguracionService;
 
 @page "/"
 @attribute [Authorize];
@@ -211,11 +212,15 @@ else
     private string[] donutLabels = [];
     private List<ChartSeries<double>> donutSeries = [];
     private TicketDto[]? ticketsRecientes;
+    
+    //configuracion
+    private ConfiguracionResponseDto? configuracion;
 
     protected override async Task OnInitializedAsync()
     {
         stats = await ticketService.GetTicketsStatsAsync();
         ticketsRecientes = await ticketService.GetTicketsRecientesAsync();
+        configuracion = await ConfiguracionService.GetConfiguracionAsync();
         if (stats is null)
         {
             snackbar.Add("No se pudo obtener tus tickets, contacte a soporte.", Severity.Error);
@@ -250,8 +255,11 @@ else
     private async Task CrearTicketAsync()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Medium, FullWidth=true};
-
-        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", options);
+        DialogParameters<CrearTicketDialog> parameters = new()
+        {
+            { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
+        };
+        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", parameters, options);
 
         var result = await dialog.Result;
 
