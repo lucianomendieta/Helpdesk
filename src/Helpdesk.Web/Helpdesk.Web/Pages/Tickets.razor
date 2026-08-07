@@ -90,6 +90,11 @@
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreAgente)">Asignado a</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Estado)">Estado</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Prioridad)">Prioridad</MudTableSortLabel></MudTh>
+            @if (configuracion?.UsarFechaVencimiento == true)
+            {
+                <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaVencimiento)">Fecha de vencimiento</MudTableSortLabel></MudTh>
+            }
+            
         </HeaderContent>
         <RowTemplate >
             <MudTd DataLabel="ID">@context.Id</MudTd>
@@ -114,18 +119,27 @@
                     <MudChip T="EstadoTicket">@context.Estado</MudChip>
             </MudTd>
             <MudTd DataLabel="Prioridad">
-                @if (context.CategoriaId is null)
-                {
-                    <MudText> Sin categoria</MudText>
-                }
-                else
-                {
-                    <MudStack Row="true">
-                        <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@context.Prioridad.GetColor()" Size="Size.Small"/>
-                        <MudText>@context.Prioridad</MudText>
-                    </MudStack>
-                }
+                <MudStack Row="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@context.Prioridad.GetColor()" Size="Size.Small"/>
+                    <MudText>@context.Prioridad</MudText>
+                </MudStack>
             </MudTd>
+            @*FECHA DE VENCIMIENTO*@
+            @if (configuracion?.UsarFechaVencimiento == true)
+            {
+                
+                <MudTd DataLabel="Fecha de Vencimiento">
+                    @if (context.FechaVencimiento is not null)
+                    {
+                        <MudChip T="string" Color="@context.GetVencimientoColor()">@context.GetVencimientoTexto()</MudChip>
+                    }
+                    else
+                    {
+                        <MudText> - </MudText>
+                    }
+                </MudTd>
+            }
+            
             <MudTd @onclick:stopPropagation="true">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
                 Color="Color.Secondary"
@@ -175,6 +189,10 @@ else @*VISTA DE CARDS/TARJETAS*@
                                         @ticket.CategoriaNombre
                                     </MudChip>
                                 }
+                            @if (configuracion?.UsarFechaVencimiento == true && ticket.FechaVencimiento is not null)
+                            {
+                                <MudChip T="string" Color="@ticket.GetVencimientoColor()"> @ticket.GetVencimientoTexto()</MudChip>
+                            }
                             <MudDivider Class="my-2"/>
                             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudStack Row="true">

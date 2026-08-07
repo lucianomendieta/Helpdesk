@@ -8,5 +8,6 @@ public record TicketsStatsDto
     int Hecho,
     int Pendiente,
     int Cerrado,
-    int SinAsignar
+    int SinAsignar,
+    int VencenHoy
     );

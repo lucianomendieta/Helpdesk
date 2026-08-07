@@ -30,7 +30,7 @@ else
             <Authorized>
                 @*Saludo al cliente y le digo cuantos tickets en total tiene*@
                 <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
                     <MudText Typo="Typo.h6" Color="Color.Default">@($"Tenes {stats.Total} tickets registrados! Asi esta el estado de tus tickets:")</MudText>
                 </MudStack>
 
@@ -56,7 +56,7 @@ else
             <Authorized>
                 @*Saludo al agente, le digo si tiene pendientes y su total*@
                 <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
                     <MudText Typo="Typo.h6" Color="Color.Default">@($"Tienes {stats.Total} tickets asignados! {pendingStatsAsk(stats.Pendiente)}")</MudText>
                 </MudStack>
 
@@ -65,7 +65,27 @@ else
                     @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
                     @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
                     @ticketStatsCard(stats.Pendiente, EstadoTicket.Pendiente)
-                    @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
+                    @* Si esta habilitado la fecha de vecimiento se reemplazan por los tickets cerrados - menor importancias*@
+                    @if (configuracion?.UsarFechaVencimiento == true)
+                    {
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCard>
+                                <MudCardContent>
+                                    <MudStack>
+                                        <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.Schedule" /> </MudAvatar>
+                                    </MudStack>
+                                    <MudStack>
+                                        <MudText Typo="Typo.h6">@stats.VencenHoy</MudText>
+                                        <MudText Typo="Typo.body1">Vencen Hoy</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                    else
+                    {
+                        @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
+                    }
                 </MudGrid>
                 
             </Authorized>
@@ -76,8 +96,11 @@ else
             <Authorized>
                 @*Saludo al admin, le digo si tiene pendientes y su total*@
                 <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name</MudText>
-                    <MudText Typo="Typo.h6" Color="Color.Default">@($"Resumen general del sistema - {sinasignarStats(stats.SinAsignar)}")</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name - 
+                        @(saludoEmpresa(configuracion?.NombreEmpresa) ?? "Configure el nombre de su empresa en Configuracion")</MudText>
+                    
+                    <MudText Typo="Typo.h6" Color="Color.Default">@($"Resumen general del sistema - " +
+                                                                  $"{sinasignarStats(stats.SinAsignar)}")</MudText>
                 </MudStack>
 
                 @*Barra de estados*@
@@ -85,19 +108,35 @@ else
                     @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
                     @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
                     @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudCard>
+                            <MudCardContent>
+                                <MudStack>
+                                    <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.PersonOff" /> </MudAvatar>
+                                </MudStack>
+                                <MudStack>
+                                    <MudText Typo="Typo.h6">@stats.SinAsignar</MudText>
+                                    <MudText Typo="Typo.body1">Sin Asignar</MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    @if (configuracion?.UsarFechaVencimiento == true)
+                    {
                         <MudItem xs="12" sm="6" md="3">
                             <MudCard>
                                 <MudCardContent>
                                     <MudStack>
-                                        <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.PersonOff" /> </MudAvatar>
+                                        <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.Schedule" /> </MudAvatar>
                                     </MudStack>
                                     <MudStack>
-                                        <MudText Typo="Typo.h6">@stats.SinAsignar</MudText>
-                                        <MudText Typo="Typo.body1">Sin Asignar</MudText>
+                                        <MudText Typo="Typo.h6">@stats.VencenHoy</MudText>
+                                        <MudText Typo="Typo.body1">Vencen Hoy</MudText>
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
                         </MudItem>
+                    }
                 </MudGrid>
 
             </Authorized>
@@ -221,6 +260,7 @@ else
         stats = await ticketService.GetTicketsStatsAsync();
         ticketsRecientes = await ticketService.GetTicketsRecientesAsync();
         configuracion = await ConfiguracionService.GetConfiguracionAsync();
+            
         if (stats is null)
         {
             snackbar.Add("No se pudo obtener tus tickets, contacte a soporte.", Severity.Error);
@@ -351,5 +391,15 @@ else
         }
     }
 
-
+    string? saludoEmpresa(string? empresa)
+    {
+        if (empresa is null)
+        {
+            return null;
+        }
+        else
+        {
+            return $" - {empresa}";
+        }
+    }
 }

@@ -126,7 +126,7 @@ else
                     <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de vencimiento</MudText>
                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                         <Authorized>
-                            <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)" DateChanged="ChangeVencimientoAsync" />
+                            <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)" DateChanged="ChangeVencimientoAsync" Clearable="true" />
                         </Authorized>
                         <NotAuthorized>
                             <MudText Class="mt-2" Color="Color.Secondary" Typo="Typo.body1">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>

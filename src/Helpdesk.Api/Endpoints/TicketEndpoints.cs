@@ -148,6 +148,14 @@ public static class TicketEndpoints
         var sinAsignar = await FiltrarPorRol(query, rol, usuarioInt)
             .Where(t => t.AgenteAsignadoId == null)
             .CountAsync();
+        
+        //cuento los que vencen hoy
+        var hoy = DateTime.Now.Date;
+        var vencenHoy = await FiltrarPorRol(query, rol, usuarioInt)
+            .Where(t => t.FechaVencimiento != null)
+            .Where(t => t.FechaVencimiento >= hoy && t.FechaVencimiento < hoy.AddDays(1))
+            .Where(t => t.Estado != EstadoTicket.Hecho && t.Estado != EstadoTicket.Cerrado)
+            .CountAsync();
 
         //funcion para contar los agrupados
         int ContarEstado(EstadoTicket estado) => agrupados.FirstOrDefault(t => t.Estado == estado)?.Cantidad ?? 0;
@@ -159,7 +167,8 @@ public static class TicketEndpoints
                 ContarEstado(EstadoTicket.Hecho),
                 ContarEstado(EstadoTicket.Pendiente),
                 ContarEstado(EstadoTicket.Cerrado),
-                sinAsignar
+                sinAsignar,
+                vencenHoy
             ));
     }
 
