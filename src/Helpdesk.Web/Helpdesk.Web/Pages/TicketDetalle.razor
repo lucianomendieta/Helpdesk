@@ -121,12 +121,12 @@ else
                 <MudText Class="mt-3" Typo="Typo.body1">@ticket?.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
             
                 @*Fecha de vencimiento (si tiene)*@
-                @if (configuracion!.UsarFechaVencimiento)
+                @if (configuracion?.UsarFechaVencimiento == true)
                 {
                     <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de vencimiento</MudText>
                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                         <Authorized>
-                            <MudDatePicker Date="" DateChanged="" />
+                            <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)" DateChanged="ChangeVencimientoAsync" />
                         </Authorized>
                         <NotAuthorized>
                             <MudText Class="mt-2" Color="Color.Secondary" Typo="Typo.body1">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
@@ -345,16 +345,25 @@ else
     //cambio la fecha de vencimiento del ticket
     private async Task ChangeVencimientoAsync(DateTime? fechaNueva)
     {
+        //Instancio el dto para tenerlo dispo
+        ActualizarVencimientoTicketDto dto = new();
+        //Si es null no tiene vencimiento, si si tiene cargada la fecha convierto a date time
         if (fechaNueva is null)
         {
-            ticket.FechaVencimiento = null;
+            dto.FechaVencimiento = null;
         }
         else
         {
-            var dto = new ActualizarVencimientoTicketDto()
-            {
-                FechaVencimiento = new DateTimeOffset(fechaNueva.Value, TimeZoneInfo.Local.GetUtcOffset(fechaNueva.Value)) 
-            };
+            dto.FechaVencimiento = new DateTimeOffset(fechaNueva.Value, TimeZoneInfo.Local.GetUtcOffset(fechaNueva.Value));
+        }
+        var isUpdated = await ticketService.ChangeTicketVencimientoAsync(Id, dto);
+        if (isUpdated)
+        {
+            ticket!.FechaVencimiento = dto.FechaVencimiento;
+        }
+        else
+        {
+            snackbar.Add("No se pudo actualizar la fecha de vencimiento, favor verificar", Severity.Error);
         }
         
     }
