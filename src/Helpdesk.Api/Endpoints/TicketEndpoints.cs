@@ -19,6 +19,8 @@ public static class TicketEndpoints
         group.MapGet("/{id}", GetTicketId);
         group.MapGet("/stats", GetStats);
         group.MapGet("/recents", GetRecents);
+        group.MapGet("/reportes", GetReportes)
+            .RequireAuthorization("SoloAdmins");
         //Posts
         group.MapPost("/", PostTicket);
         //Puts
@@ -207,6 +209,67 @@ public static class TicketEndpoints
                     t.FechaVencimiento)).ToListAsync(); //Devuelvo el response en el formato conocido
         return Results.Ok(filtrados);
     }
+    
+    
+    //GET REPORTES
+    private static async Task<IResult> GetReportes(HelpdeskDbContext contexto, DateTimeOffset? desde,
+        DateTimeOffset? hasta)
+    {
+        //Seteo las variables si mandan null
+        var hastaFinal = hasta ?? DateTimeOffset.UtcNow;
+        var desdeFinal = desde ?? hastaFinal.AddMonths(-12);
+
+        //Creo un queryable base para filtrar luego
+        var creados = contexto.Tickets.Where(t => t.FechaCreacion >= desdeFinal && t.FechaCreacion <= hastaFinal);
+
+        #region Categorias
+
+        //Traigo de la base agrupando
+        var categoriasRaw = await creados
+            .GroupBy(t => t.Categoria == null ? null : t.Categoria.Nombre) //Agrupo por categorias
+            .Select(g => new { g.Key, Cantidad = g.Count() }) //Selecciono y saco cantidades
+            .ToListAsync() ;
+        
+        //Mapeo en la columna del dto, resolviendo null
+        var porCategoria = categoriasRaw
+            .Select(x => new ReporteCategoriaDto(x.Key ?? "Sin categoria", x.Cantidad))
+            .ToList();
+
+        #endregion
+
+        #region Meses
+
+        //SQL: agrupo y cuento, proyectando a tipo anonimo
+        var mesesRaw = await creados
+            .GroupBy(t => new { t.FechaCreacion.Year, t.FechaCreacion.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Cantidad = g.Count() })
+            .ToListAsync();
+
+        //En memoria: ordeno y mapeo al DTO
+        var porMes = mesesRaw
+            .OrderBy(x => x.Year)
+            .ThenBy(x => x.Month)
+            .Select(x => new ReporteMesDto(x.Year, x.Month, x.Cantidad))
+            .ToList();
+
+        #endregion
+        
+        //Tickets resueltos en el rango
+        var resueltos = contexto.Tickets.Where(t => t.FechaCierre != null
+                                                    && t.FechaCierre >= desdeFinal
+                                                    && t.FechaCierre <= hastaFinal);
+        var cantidadResueltos = await resueltos.CountAsync();
+        
+        //Promedio de tiempo por tickets
+        double? promedioDias = cantidadResueltos == 0
+            ? null
+            : await resueltos.AverageAsync(t =>
+                (double)EF.Functions.DateDiffDay(t.FechaCreacion, t.FechaCierre!.Value));
+
+        //Devuelvo la lista
+        return Results.Ok(new ReporteResponseDto(porCategoria, porMes,
+            new ReporteTiempoResolucionDto(promedioDias, cantidadResueltos)));
+    }
 
     #endregion
 
@@ -380,6 +443,18 @@ public static class TicketEndpoints
         if (dto.EstadoTicket is null)
         {
             return Results.BadRequest("Ingrese un estado para el ticket.");
+        }
+        
+        //verifico si se cerro el ticket
+        //Si el nuevo es cerrado y el viejo no era cerrado
+        if (dto.EstadoTicket == EstadoTicket.Cerrado && ticket.Estado != EstadoTicket.Cerrado) 
+        {
+            ticket.FechaCierre = DateTimeOffset.UtcNow;
+        }
+        //Si el viejo estaba cerrado y el nuevo no
+        else if (ticket.Estado == EstadoTicket.Cerrado && dto.EstadoTicket != EstadoTicket.Cerrado)
+        {
+            ticket.FechaCierre = null; //Se reabre el ticket
         }
         ticket.Estado = dto.EstadoTicket.Value;
 

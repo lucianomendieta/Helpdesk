@@ -15,5 +15,5 @@ public class Ticket
     public Categoria? Categoria {get; set;}
     public int? CategoriaId {get; set;}
     public DateTimeOffset? FechaVencimiento { get; set; }
-
+    public DateTimeOffset? FechaCierre { get; set; }
 }
