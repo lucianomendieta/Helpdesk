@@ -64,6 +64,9 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 //Servicio de configuraciones
 builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 
+//Servicio de reportes
+builder.Services.AddScoped<IReportesService, ReportesService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 

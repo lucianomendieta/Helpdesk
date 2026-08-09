@@ -1,0 +1,160 @@
+﻿@page "/reportes"
+@using System.Runtime.InteropServices.JavaScript
+@using Microsoft.AspNetCore.Authorization
+@using _Imports = MudBlazor._Imports
+
+@attribute [Authorize(Roles = "Administrador,Gerente")]
+
+@inject IReportesService ReportesService;
+@inject IConfiguracionService ConfiguracionService;
+@inject ISnackbar snackbar;
+
+@if (cargando)
+{
+    <MudSkeleton />
+}
+else if (reporte is null)
+{
+    <MudAlert Severity="Severity.Error">
+        No se pudo obtener los reportes, contacte a soporte.
+    </MudAlert>
+}
+else
+{
+    <MudContainer>
+        @*============================CABECERA=========================================*@
+        <MudStack Row="true">
+            <MudStack>
+                <MudText Typo="Typo.overline">Reportes</MudText>
+                <MudText Typo="Typo.h5">@configuracion?.NombreEmpresa - Vista solo lectura</MudText>
+            </MudStack>
+            @*DESDE*@
+            <MudDatePicker Date="desdeSelected" DateChanged="OnDesdeChanged"/>
+            @*HASTA*@
+            <MudDatePicker Date="hastaSelected" DateChanged="OnHastaChanged"/>
+            @*Espacio para el futuro boton de exportar*@
+            <MudSpacer/>
+        </MudStack>
+        
+        @*==================PROMEDIO DEL PERIODO=========================   *@
+        <MudPaper Class="ma-4"> 
+            <MudStack Row="true">
+                <MudIcon Icon="@Icons.Material.Filled.Timer"/>
+                @*CONTADOR DE PROMEDIO*@
+                <MudStack>
+                    @if (reporte.TiempoResolucion.PromedioDias == null)
+                    {
+                        <MudChip T="string" Color="Color.Error">Sin tickets resueltos en el periodo</MudChip>
+                    }
+                    else
+                    {
+                        <MudStack Row="true">
+                            <MudText Typo="Typo.h6">@reporte.TiempoResolucion.PromedioDias</MudText>
+                            <MudText Typo="Typo.body1"> dias promedio de resolucion</MudText>
+                        </MudStack>
+                    
+                        <MudText>Promedio sobre @reporte.TiempoResolucion.CantidadResueltos en el periodo</MudText>    
+                    }
+                    
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+        
+        @*============================POR CATEGORIAS======================*@
+        <MudPaper Class="ma-4">
+            <MudText Typo="Typo.h6" Style="font-weight: bold">Volumen por categoria</MudText>
+            <MudText Typo="Typo.body1"> Tickets creados en el periodo </MudText>
+            
+            @foreach (var categoria in reporte.PorCategoria)
+            {
+                <MudStack Row="true">
+                    <MudText Typo="Typo.body1">@categoria.Categoria</MudText>
+                    <MudProgressLinear 
+                        Max="reporte.PorCategoria.Max(c => c.Cantidad)" 
+                        Value="categoria.Cantidad"/> 
+                    <MudText Typo="Typo.body1" Style="font-weight: bold">@categoria.Cantidad</MudText>
+                </MudStack>
+            }
+        </MudPaper>
+        
+        @*=============================POR MESES==========================*@
+        <MudPaper Class="ma-4">
+            <MudText Typo="Typo.h6" Style="font-weight: bold">Volumen por mes</MudText>
+            <MudText Typo="Typo.body1"> Tickets creados por mes </MudText>
+            
+            <MudChart T="double" 
+                      ChartType="ChartType.Bar" 
+                      ChartSeries="mesesSeries"
+                      ChartLabels="labelsPorMes"
+                      Width="100%"
+                      Height="300px"
+                      />
+        </MudPaper>
+        
+    </MudContainer>
+}
+
+
+@code {
+    private bool cargando = true;
+    private ReporteResponseDto? reporte;
+    private ConfiguracionResponseDto? configuracion;
+    
+    //Timeline seleccionado
+    private DateTime? desdeSelected;
+    private DateTime? hastaSelected;
+    
+    //Datos para el chart de meses
+    private double[] cantidadesPorMes = [];
+    private string[] labelsPorMes = [];
+    private List<ChartSeries<double>> mesesSeries = [];
+
+    
+    //Inicializo los datos a usar
+    protected override async Task OnInitializedAsync()
+    {
+        configuracion = await ConfiguracionService.GetConfiguracionAsync();
+        await CargarReporteAsync();
+        
+        cargando =  false;
+        
+    }
+
+    private async Task CargarReporteAsync()
+    {
+        reporte = await ReportesService.GetReporteAsync(desdeSelected, hastaSelected);
+
+        if (reporte is null)
+        {
+            snackbar.Add("No se pudo cargar el reporte, contacte a soporte.", Severity.Error);
+            cantidadesPorMes = [];
+            labelsPorMes = [];
+            mesesSeries = [];
+            return;
+        }
+        else
+        {
+            //Precargo el reporte de meses
+            cantidadesPorMes = reporte.PorMes.Select(m => (double)m.Cantidad).ToArray();
+            labelsPorMes = reporte.PorMes.Select(m => $"{m.Mes:D2}/{m.Anio}").ToArray();
+            mesesSeries = new List<ChartSeries<double>>
+            {
+                new ChartSeries<double> { Name = "Tickets", Data = cantidadesPorMes }
+            };
+        }
+        
+    }
+
+    private async Task OnDesdeChanged(DateTime? nuevo)
+    {
+        desdeSelected = nuevo;
+        await CargarReporteAsync();
+    }
+
+    private async Task OnHastaChanged(DateTime? nuevo)
+    {
+        hastaSelected = nuevo;
+        await CargarReporteAsync();
+        
+    }
+}
