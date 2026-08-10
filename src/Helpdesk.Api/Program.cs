@@ -11,8 +11,13 @@ using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using Helpdesk.Api.Almacenamiento;
 
+using QuestPDF.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+//Agrego la licencia de questpdf
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
