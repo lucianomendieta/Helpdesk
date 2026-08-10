@@ -66,8 +66,9 @@ public class AdjuntoService (HttpClient http) : IAdjuntoService
     public async Task<Stream?> MostrarAdjuntoAsync(int ticketId, int adjuntoId)
     {
         try 
-        {//Espero la respuesta del getcontenido, si fue exitosa: leo el stream, sino: null
-        var response = await http.GetAsync($"tickets/{ticketId}/adjuntos/{adjuntoId}/contenido");
+        {
+            //Espero la respuesta del getcontenido, si fue exitosa: leo el stream, sino: null
+            var response = await http.GetAsync($"tickets/{ticketId}/adjuntos/{adjuntoId}/contenido");
             return response.IsSuccessStatusCode ? await response.Content.ReadAsStreamAsync() : null;
         }
         catch (Exception ex)

@@ -67,6 +67,9 @@ builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 //Servicio de reportes
 builder.Services.AddScoped<IReportesService, ReportesService>();
 
+//Interop de descargas
+builder.Services.AddScoped<DescargaInterop>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 

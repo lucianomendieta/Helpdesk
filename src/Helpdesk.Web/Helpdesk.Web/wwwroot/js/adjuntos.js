@@ -9,4 +9,3 @@ export async function createURL(stream, contentType) {
 export function revokeURL(url) {
     URL.revokeObjectURL(url);
 }
-

@@ -8,6 +8,7 @@
 @inject IReportesService ReportesService;
 @inject IConfiguracionService ConfiguracionService;
 @inject ISnackbar snackbar;
+@inject DescargaInterop DescargaInterop;
 
 @if (cargando)
 {
@@ -32,8 +33,11 @@ else
             <MudDatePicker Date="desdeSelected" DateChanged="OnDesdeChanged"/>
             @*HASTA*@
             <MudDatePicker Date="hastaSelected" DateChanged="OnHastaChanged"/>
-            @*Espacio para el futuro boton de exportar*@
+            @*EXPORTAR*@
             <MudSpacer/>
+            <MudButton StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                       OnClick="ExportarPdfAsync"
+                       Disabled="exportando">Exportar</MudButton>
         </MudStack>
         
         @*==================PROMEDIO DEL PERIODO=========================   *@
@@ -97,6 +101,7 @@ else
 
 @code {
     private bool cargando = true;
+    private bool exportando = false;
     private ReporteResponseDto? reporte;
     private ConfiguracionResponseDto? configuracion;
     
@@ -144,6 +149,8 @@ else
         }
         
     }
+    
+    
 
     private async Task OnDesdeChanged(DateTime? nuevo)
     {
@@ -155,6 +162,28 @@ else
     {
         hastaSelected = nuevo;
         await CargarReporteAsync();
+        
+    }
+    
+    //Handler para exportar el pdf
+    private async Task ExportarPdfAsync()
+    {
+        exportando = true;
+        try
+        {
+            var stream = await ReportesService.GetReportePdfAsync(desdeSelected, hastaSelected);
+            if (stream is null)
+            {
+                snackbar.Add("No se pudo descargar el pdf, vuelva a intentarlo.", Severity.Error);
+                return;
+            }
+            
+            await DescargaInterop.DescargarArchivo( stream, "reporte.pdf");
+        }
+        finally
+        {
+            exportando = false;
+        }
         
     }
 }
