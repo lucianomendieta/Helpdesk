@@ -1,10 +1,16 @@
+using System.Globalization;
 using System.Security.Claims;
 
 using Helpdesk.Api.Authorization;
 using Helpdesk.Api.Data;
 using Helpdesk.Api.Dtos;
 using Helpdesk.Api.Models;
+
+using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Helpdesk.Api.Endpoints;
 
@@ -19,10 +25,16 @@ public static class TicketEndpoints
         group.MapGet("/{id}", GetTicketId);
         group.MapGet("/stats", GetStats);
         group.MapGet("/recents", GetRecents);
+        
+        //Reportes
         group.MapGet("/reportes", GetReportes)
             .RequireAuthorization("SoloAdmins");
+        group.MapGet("/reportes/pdf", GetReportePdf)
+            .RequireAuthorization("SoloAdmins");
+        
         //Posts
         group.MapPost("/", PostTicket);
+        
         //Puts
         group.MapPut("/{id}", PutTicket);
         group.MapPut("/{ticketId}/assign", AssignTicket)
@@ -35,6 +47,7 @@ public static class TicketEndpoints
             .RequireAuthorization("SoloPersonal");
         group.MapPut("{ticketId}/vencimiento", PutFechaVencimiento)
             .RequireAuthorization("SoloPersonal");
+        
         //Deletes
         group.MapDelete("/{id}", DeleteTicket)
             .RequireAuthorization("SoloAdmins");
@@ -225,10 +238,10 @@ public static class TicketEndpoints
     {
         var (desdeFinal, hastaFinal) = ResolverRango(desde, hasta);
         
+        //Obtengo la lista a memoria
         var detalleRaw = await contexto.Tickets
                 .Where(t => t.FechaCreacion >= desdeFinal 
                                                 && t.FechaCreacion <= hastaFinal)
-                .Include(t => t.Categoria)
                 .OrderBy(t => t.FechaCreacion)
                 .Select(t => new {t.Titulo, 
                     CategoriaNombre = t.Categoria == null ? null : t.Categoria.Nombre, 
@@ -237,8 +250,157 @@ public static class TicketEndpoints
                     t.FechaCierre
                 })
                 .ToListAsync();
+
+        //modifico la lista
+        var detalle = detalleRaw
+            .Select(d => new ReporteDetalleFila
+            (d.Titulo,
+                d.CategoriaNombre ?? "Sin Categoria",
+                d.Estado,
+                d.FechaCierre == null ? (int?)null : (int)(d.FechaCierre.Value - d.FechaCreacion).TotalDays))
+            .ToList();
+
+        //REalizo el resumen
+        var resumen = await CalcularAsync(contexto, desde, hasta);
+        //obtengo el nombre de empresa
+        var config = await contexto.ConfiguracionesEmpresa.FirstAsync();
         
-        var detalle = detalleRaw.Select()
+        //Armo el documento pdf
+        var documento = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                //Configuro la pagina
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Text($"{config.NombreEmpresa} - Resumen general del periodo ");
+                //Secciones del reporte
+                page.Content().Column(col =>
+                {
+                    col.Spacing(10);
+                    
+                    col.Item().Text($"Periodo: {desdeFinal:dd/MM/yyyy} - {hastaFinal:dd/MM/yyyy}");
+                    col.Item().Text($"Tiempo de resolucion promedio: {resumen.TiempoResolucion.PromedioDias?.ToString("F1" + " dias") ?? "N/D"} ");
+
+                    #region Detalle de tickets
+
+                    //Armo la tabla del detalle de los tickets
+                    col.Item().Text("Detalle de tickets").Bold();
+                    col.Item().Table(table =>
+                    {
+                        //Seteo el ancho de cada columna (4)
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                        });
+                                
+                        //Cabecera de la tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Titulo");
+                            header.Cell().Text("Categoria");
+                            header.Cell().Text("Estado");
+                            header.Cell().Text("Dias hasta Resolucion");
+                        });
+
+                        foreach (var fila in detalle)
+                        {
+                            table.Cell().Text(fila.Titulo);
+                            table.Cell().Text(fila.Categoria);
+                            table.Cell().Text(fila.Estado.ToString());
+                            table.Cell().Text(fila.DiasResolucion?.ToString() ?? "-");
+                        }
+                    });
+
+                    #endregion
+
+                    #region Volumen por Categoria
+
+                    //Armo la tabla de categorias
+                    col.Item().Text("Volumen por Categoria").Bold();
+                    col.Item().Table(table =>
+                    {
+                        //Seteo el ancho de cada columna (2)
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2);
+                            columns.RelativeColumn();
+                        });
+                                
+                        //Cabecera de la tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Categoria");
+                            header.Cell().Text("Cantidad");
+                        });
+
+                        foreach (var fila in resumen.PorCategoria)
+                        {
+                            table.Cell().Text(fila.Categoria);
+                            table.Cell().Text(fila.Cantidad.ToString());
+                        }
+                    });
+
+                    #endregion
+                    
+                    #region Volumen por mes
+
+                    //Armo la tabla de categorias
+                    col.Item().Text("Volumen por mes").Bold();
+                    col.Item().Table(table =>
+                    {
+                        //Seteo el ancho de cada columna (2)
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                            columns.RelativeColumn();
+                        });
+                                
+                        //Cabecera de la tabla
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Año");
+                            header.Cell().Text("Mes");
+                            header.Cell().Text("Cantidad");
+                        });
+                        //Seteo la cultura
+                        var cultura = CultureInfo.GetCultureInfo("es-ES");
+                        
+                        foreach (var fila in resumen.PorMes)
+                        {
+                            
+                            
+                            table.Cell().Text(fila.Anio.ToString());
+                            //Paso los numeros de meses a nombres
+                            table.Cell().Text(cultura.DateTimeFormat.GetMonthName(fila.Mes)); 
+                            table.Cell().Text(fila.Cantidad.ToString());
+                        }
+                    });
+
+                    #endregion
+                    
+                    
+                });
+                    
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.CurrentPageNumber();
+                    x.Span(" / ");
+                    x.TotalPages();
+                });
+
+            });
+        });
+
+        //Calculo los bytes y exporto el pdf
+        var bytes = documento.GeneratePdf();
+        return Results.File(bytes, "application/pdf", "reporte.pdf");
     }
 
     #endregion
@@ -658,8 +820,8 @@ public static class TicketEndpoints
         //Seteo las variables si mandan null
         var hastaFinal = hasta ?? DateTimeOffset.UtcNow;
         var desdeFinal = desde ?? hastaFinal.AddMonths(-12);
-        
-        return (desdeFinal, hastaFinal) = ResolverRango(desdeFinal, hastaFinal);
+
+        return (desdeFinal, hastaFinal);
     }
 }
     
