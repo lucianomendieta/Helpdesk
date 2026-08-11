@@ -71,6 +71,7 @@
                             <MudNavLink Href="/usuarios" Icon="@Icons.Material.Filled.People">Usuarios</MudNavLink>
                             <MudNavLink Href="/reportes" Icon="@Icons.Material.Filled.BarChart">Reportes</MudNavLink>
                             <MudNavLink Href="/settings" Icon="@Icons.Material.Filled.Settings">Configuracion</MudNavLink>
+                            <MudNavLink Href="/mi-perfil" Icon="@Icons.Material.Filled.Person">Mi Perfil</MudNavLink>
                         </MudNavMenu>
                     </Authorized>
                 </AuthorizeView>
@@ -84,25 +85,101 @@
                         var nombre = context.User.Identity?.Name;
                         var rol = context.User.FindFirst("role")?.Value;
                     }
+                    
+                    <div style="height:1px; background:rgba(255,255,255,.06); margin-bottom:12px"/>
 
-                    <MudCard>
-                        @*toggle de modo oscuro*@
-                        <MudIconButton Icon="@Icons.Material.Filled.DarkMode" OnClick="ToggleDarkMode"/>
-
-                        @*dibujo el avatar con el helper*@
-                        <MudStack Row="true">
-                            <MudAvatar>@InicialHelper.InicialesHelper(nombre)</MudAvatar>
-
-                            @*datos del usuario*@
-                            <MudStack>
-                                <MudText Typo="Typo.body1">@nombre</MudText>
-                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@rol</MudText>
+                    @if (drawerOpen)
+                    {
+                        <MudPaper Elevation="0" Style="background:#F3EEE4; 
+                                                        border-radius:13px; 
+                                                        padding:14px 14px 12px; 
+                                                        display:flex; 
+                                                        flex-direction:column; 
+                                                        gap:10px">
+                            @*toggle de modo oscuro*@
+                            <MudStack Row="true" Style="justify-content: space-between; align-items: center; width: 100%;">
+                                <MudText Typo="Typo.body1" Style="color: var(--mud-palette-text-primary); font-size: 12.5px; font-weight: 600;">
+                                    Modo oscuro
+                                </MudText>
+                                <MudSwitch T="bool"
+                                           @bind-Value="isDarkMode"
+                                           @bind-Value:after="GuardarModo"
+                                           Color="Color.Primary"
+                                           ThumbIcon="@(isDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)"
+                                           Style="margin: 0;"/>
                             </MudStack>
+                            
+                            
+                            @*dibujo el avatar con el helper*@
+                            <MudStack Row="true" Style="gap: 2px; justify-content: space-between;">
+                                <MudAvatar Style="width:30px;
+                                                    height:30px;
+                                                    font-size:12px;
+                                                    font-weight:700;
+                                                    background:#E7E1D4;
+                                                    color:#756F63;
+                                                    cursor:pointer"
+                                           @onclick="@(() => navigation.NavigateTo("/mi-perfil"))">
+                                    @InicialHelper.InicialesHelper(nombre)
+                                </MudAvatar>
 
-                            @*Boton de logout*@
-                            <MudIconButton Icon="@Icons.Material.Filled.Logout" Style="margin-left:auto;" OnClick="CerrarSesion"/>
-                        </MudStack>
-                    </MudCard>
+                                @*datos del usuario*@
+                                <MudStack >
+                                    <MudText Typo="Typo.body1" Style="color: var(--mud-palette-text-primary); font-size: 12.5px; font-weight: 600;">
+                                        @nombre
+                                    </MudText>
+                                    <MudText Typo="Typo.subtitle2"
+                                             Style="color: var(--mud-palette-primary); font-size: 11px; font-weight: 600;">
+                                        @rol
+                                    </MudText>
+                                </MudStack>
+
+                                @*Boton de logout*@
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.Logout" 
+                                    Style="margin-left:auto; color: #948C7D" 
+                                    OnClick="CerrarSesion"
+                                    Size="Size.Small"/>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="0" Style="background:#F3EEE4; 
+                                                        border-radius:13px; 
+                                                        padding:14px 14px 12px; 
+                                                        display:flex; 
+                                                        flex-direction:column; 
+                                                        gap:10px">
+                            <MudStack AlignItems="AlignItems.Center" Style="gap: 2px;">
+                                @*toggle de modo oscuro*@
+                                <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                                               OnClick="ToggleDarkMode"
+                                               Size="Size.Small" />
+                                
+                                @*Avatar*@
+                                <MudAvatar Style="width:30px; 
+                                                            height:30px; 
+                                                            font-size:12px; 
+                                                            font-weight:700; 
+                                                            background:#E7E1D4; 
+                                                            color:#756F63;
+                                                            cursor:pointer;"
+                                           @onclick="@(() => navigation.NavigateTo("/mi-perfil"))">
+                                    @InicialHelper.InicialesHelper(nombre)
+                                </MudAvatar>
+                                
+                                    
+                                @*Boton de logout*@
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.Logout" 
+                                    Style="color: #948C7D" 
+                                    OnClick="CerrarSesion"
+                                    Size="Size.Small"/>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                    
                 </MudStack>
             </MudDrawer>
        </Authorized>
@@ -155,4 +232,7 @@
         await auth.LogoutAsync();
         navigation.NavigateTo("/login");
     }
+    
+    private async Task GuardarModo()
+        => await storage.SetItemAsync("modoOscuro", isDarkMode.ToString());
 }

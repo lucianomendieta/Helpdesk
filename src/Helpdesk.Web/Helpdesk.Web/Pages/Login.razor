@@ -7,15 +7,78 @@
 @inject MudBlazor.ISnackbar snackbar;
 
 
-<h3>Login</h3>
+<div style="min-height: calc(100vh - 16vh);
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
-<MudForm @ref="form" @bind-IsValid="IsValid">
-    <MudTextField T="string" Label="Nombre" @bind-Value="nombre" Required="true" RequiredError="El nombre es obligatorio." />
-    <MudTextField T="string" Label="Contraseña" InputType="InputType.Password" @bind-Value="password" Required="true" RequiredError="Ingrese su contraseña" />
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync">
-        Iniciar Sesion
-    </MudButton>
-</MudForm>
+            background: var(--mud-palette-background)">
+    
+    <div style="width: 420px;
+                align-items: center;
+                justify-content: center;
+                padding: 36px 34px;
+                box-sizing: border-box;
+                border-radius: 11px;
+                background:#F3EEE4">
+        
+        @*LOGO*@
+        <MudStack Row="true" AlignItems="AlignItems.Center" Style="gap: 10px;margin-bottom: 30px;">
+            <div style="border-radius: 9px; 
+                                background-color: var(--mud-palette-primary); 
+                                width:40px; 
+                                height:40px; 
+                                display:flex; 
+                                align-items:center; 
+                                justify-content:center;">
+                <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Color="Color.Inherit" />
+            
+            </div>
+            <MudText Typo="Typo.h6">MesaPlus</MudText>
+        </MudStack>
+        
+        
+        <MudText Style="font-size: 24px; font-weight: 700; color: #221F1A">Iniciar sesion</MudText>
+        <MudText Style="font-size: 13.5px; color: #756F63; margin-bottom: 26px">Accedé a tu mesa de ayuda</MudText>
+        
+        <MudForm @ref="form" @bind-IsValid="IsValid">
+            @*NOMBRE DE USUARIO*@
+            <div style="margin-bottom: 20px">
+                <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 7px">Nombre de usuario</MudText>
+                <MudTextField T="string"
+                              @bind-Value="nombre" 
+                              Variant="Variant.Outlined" 
+                              Required="true" 
+                              RequiredError="El nombre es obligatorio."/>
+            </div>
+            
+            
+            @*CONTRASEÑA*@
+            <div style="margin-bottom: 20px">
+                <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 7px">Contraseña</MudText>
+                <MudTextField T="string" 
+                              InputType="InputType.Password" 
+                              Variant="Variant.Outlined" 
+                              @bind-Value="password" 
+                              Required="true" 
+                              RequiredError="Ingrese su contraseña"/>
+            </div>
+            
+            
+            @*BOTON DE INICIAR SESION*@
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true" 
+                       OnClick="SubmitAsync"
+                       Style="border-radius: 11px;padding: 14px; font-weight: 700; font-size: 14.5px; margin-top: 20px">
+                Iniciar Sesion
+            </MudButton>
+        </MudForm>
+        
+    </div>
+</div>
+
+
 
 @code {
     private MudForm form;
