@@ -1,5 +1,37 @@
+:root{
+    /*ESTADO*/
+    /*Background*/
+    --estado-nuevo-bg: #E7EFFE;
+    --estado-pendiente-bg: #FBF1D6;
+    --estado-enproceso-bg: 	#FCE7D9;
+    --estado-hecho-bg: #DFF3E7;
+    --estado-cerrado-bg: #EDEAE3;
+    /*textos*/
+    --estado-nuevo-txt: #2F6FED;
+    --estado-pendiente-txt: #8A6D18;
+    --estado-enproceso-txt: #C1571F;
+    --estado-hecho-txt: #1E8E5A;
+    --estado-cerrado-txt: #6B6459;
+    
+    /*PRIORIDAD*/
+    /*Background*/
+    --prioridad-baja-bg: #DFF3E7;
+    --prioridad-media-bg: #FBF1D6;
+    --prioridad-alta-bg: #FCE0D2;
+    --prioridad-urgente-bg: #FCE1E1;
+    /*Texto*/
+    --prioridad-baja-txt: #1E8E5A;
+    --prioridad-media-txt: #8A6D18;
+    --prioridad-alta-txt: #C1571F;
+    --prioridad-urgente-txt: #C6302F;
+    
+    /*BORDES*/
+    --borde-sutil: rgba(33,29,24,0.08)
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: var(--mud-palette-background, #EDE6D8);
 }
 
 h1:focus {
@@ -112,4 +144,39 @@ code {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/*Typo*/
+.mud-typography, .mud-input, .mud-button-root, body {
+    font-family: 'Inter', sans-serif;
+}
+
+/*Mato sombras de los material*/
+[class*="mud-elevation-"]{
+    box-shadow: none;
+}
+
+/*Estado activo del nav*/
+.mud-nav-link.active {
+    background-color: #EA6A3D !important;
+    color: white !important;
+    border-radius: 9px;
+}
+
+/*Padding de la side bar*/
+.mud-drawer-content {
+    padding: 16px;
+}
+.mud-drawer--closed .mud-drawer-content {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+.mud-drawer--closed .mud-nav-link {
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
+}
+
+.mud-nav-item {
+    margin-bottom: 4px;
 }

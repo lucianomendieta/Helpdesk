@@ -96,7 +96,7 @@ else
             <Authorized>
                 @*Saludo al admin, le digo si tiene pendientes y su total*@
                 <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name - 
+                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name 
                         @(saludoEmpresa(configuracion?.NombreEmpresa) ?? "Configure el nombre de su empresa en Configuracion")</MudText>
                     
                     <MudText Typo="Typo.h6" Color="Color.Default">@($"Resumen general del sistema - " +

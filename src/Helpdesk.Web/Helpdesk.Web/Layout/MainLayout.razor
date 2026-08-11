@@ -1,13 +1,13 @@
-﻿@using System.Security.Claims;
-@using Helpdesk.Web.Helpers
+﻿@using Helpdesk.Web.Theme
 @using Microsoft.AspNetCore.Components.Authorization
+
 @inherits LayoutComponentBase
 
 @inject ILocalStorageService storage;
 @inject NavigationManager navigation;
 @inject IAuthService auth;
 
-<MudThemeProvider @ref="themeProvider" @bind-IsDarkMode="isDarkMode"/>
+<MudThemeProvider @ref="themeProvider" @bind-IsDarkMode="isDarkMode" Theme="HelpdeskTheme.Default"/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
@@ -17,9 +17,28 @@
     <AuthorizeView>
         <Authorized>
             <MudDrawer @bind-Open="drawerOpen" Variant="DrawerVariant.Mini">
+                @*Logo de header*@
+                <MudStack Row="true" AlignItems="AlignItems.Center"
+                          Justify="@(drawerOpen ? Justify.FlexStart : Justify.Center)"
+                          Class="gap-2">
+                    <div style="border-radius: 9px; 
+                                background-color: var(--mud-palette-primary); 
+                                width:40px; 
+                                height:40px; 
+                                display:flex; 
+                                align-items:center; 
+                                justify-content:center;">
+                        <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Color="Color.Inherit" />
+                    </div>
+                    @if (drawerOpen)
+                    {
+                        <MudText Typo="Typo.h6">MesaPlus</MudText>
+                    }
+                </MudStack>
+                
                 @*instancio el drawer*@
-                <MudIconButton Icon="@Icons.Material.Filled.Menu" OnClick="ToggleDrawer" />
-        
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" OnClick="ToggleDrawer" Style="align-self: flex-start; color: var(--mud-palette-primary)"/>
+
                 @*Vista del nav para el cliente*@
                 <AuthorizeView Roles="Cliente">
                     <Authorized Context="vistaCliente">
@@ -59,7 +78,7 @@
 
                 @*Card de usuario*@
                 <MudStack Style="margin-top:auto; width:100%; overflow-x:hidden">
-                    
+
                     @*Declaro las variables para el usuario*@
                     @{
                         var nombre = context.User.Identity?.Name;
@@ -68,7 +87,7 @@
 
                     <MudCard>
                         @*toggle de modo oscuro*@
-                        <MudIconButton Icon="@Icons.Material.Filled.DarkMode" OnClick="ToggleDarkMode" />
+                        <MudIconButton Icon="@Icons.Material.Filled.DarkMode" OnClick="ToggleDarkMode"/>
 
                         @*dibujo el avatar con el helper*@
                         <MudStack Row="true">
@@ -81,7 +100,7 @@
                             </MudStack>
 
                             @*Boton de logout*@
-                            <MudIconButton Icon="@Icons.Material.Filled.Logout" Style="margin-left:auto;" OnClick="CerrarSesion" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Logout" Style="margin-left:auto;" OnClick="CerrarSesion"/>
                         </MudStack>
                     </MudCard>
                 </MudStack>
