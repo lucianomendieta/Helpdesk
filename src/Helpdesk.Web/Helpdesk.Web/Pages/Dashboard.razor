@@ -26,133 +26,117 @@ else if (stats is null)
 else
 {
     <MudContainer>
-        <AuthorizeView Roles="Cliente">
-            <Authorized>
-                @*Saludo al cliente y le digo cuantos tickets en total tiene*@
-                <MudStack>
-                    <MudText Style="font-weight: 700; font-size: 26px; color: #221F1A">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
-                    <MudText Style="font-size: 14.5px; color: #756F63">@($"Tenes {stats.Total} tickets registrados! Asi esta el estado de tus tickets:")</MudText>
-                </MudStack>
+        <MudGrid>
+            @*------------------------SALUDOS-----------------------*@
+            <MudItem xs="12">
+                <AuthorizeView Roles="Cliente">
+                    <Authorized>
+                        @*Saludo al cliente y le digo cuantos tickets en total tiene*@
+                        <MudStack>
+                            <MudText Style="font-weight: 700; font-size: 26px; color: #221F1A">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
+                            <MudText Style="font-size: 14.5px; color: #756F63">@($"Tenes {stats.Total} tickets registrados! Asi esta el estado de tus tickets:")</MudText>
+                        </MudStack>
+                    </Authorized>
+                </AuthorizeView>
+                
+                <AuthorizeView Roles="Agente,Analista">
+                    <Authorized>
+                        @*Saludo al agente, le digo si tiene pendientes y su total*@
+                        <MudStack>
+                            <MudText Style="font-weight: 700; font-size: 26px; color: #221F1A">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
+                            <MudText Style="font-size: 14.5px; color: #756F63">@($"Tienes {stats.Total} tickets asignados! {pendingStatsAsk(stats.Pendiente)}")</MudText>
+                        </MudStack>
 
-                @*barra de estados y creado de ticket*@
-                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
-                    @*Boton para crear un ticket nuevo*@
-                    <MudButton StartIcon="@Icons.Material.Filled.Add" 
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               OnClick="CrearTicketAsync"
-                               Style="background:var(--mud-palette-primary); 
-                               color:#fff; 
-                               font-weight:700; 
-                               border-radius:13px; 
-                               padding:15px 22px; 
-                               box-shadow:0 4px 12px;">
-                        Crear Ticket
-                     </MudButton>
+                    </Authorized>
+                </AuthorizeView>
+                
+                <AuthorizeView Roles="Administrador,Gerente">
+                    <Authorized>
+                        @*Saludo al admin, le digo si tiene pendientes y su total*@
+                        <MudStack>
+                            <MudText Style="font-weight: 700; font-size: 26px; color: #221F1A">Hola, @context.User.Identity?.Name
+                                @(saludoEmpresa(configuracion?.NombreEmpresa) ?? "Configure el nombre de su empresa en Configuracion")</MudText>
+
+                            <MudText Style="font-size: 14.5px; color: #756F63">@($"Resumen general del sistema - " +
+                                $"{sinasignarStats(stats.SinAsignar)}")</MudText>
+                        </MudStack>
+                    </Authorized>
+                </AuthorizeView>
+            </MudItem>
+            
+            @* ---- COLUMNA IZQUIERDA (8) ---- *@
+            <MudItem xs="12" md="8">
+
+                @*------------KPIs por rol--------------*@
+                <AuthorizeView Roles="Cliente">
+                    <Authorized>
+                        @*barra de estados y creado de ticket*@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4 mb-4">
+                            @*Boton para crear un ticket nuevo*@
+                            <MudButton StartIcon="@Icons.Material.Filled.Add"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="CrearTicketAsync"
+                                       Style="background:var(--mud-palette-primary); 
+                                   color:#fff; 
+                                   font-weight:700; 
+                                   border-radius:13px; 
+                                   padding:15px 22px; 
+                                   box-shadow:0 4px 12px;">
+                                Crear Ticket
+                            </MudButton>
+
+                            @*Barra de estados*@
+                            <MudStack Row="true">
+                                @ticketStatChip(stats.Abierto, EstadoTicket.Abierto)
+                                @ticketStatChip(stats.EnProgreso, EstadoTicket.EnProgreso)
+                                @ticketStatChip(stats.Cerrado, EstadoTicket.Cerrado)
+                            </MudStack>
+
+                        </MudStack>
+                    </Authorized>
+                </AuthorizeView>
+                
+                <AuthorizeView Roles="Agente,Analista">
 
                     @*Barra de estados*@
-                    <MudStack Row="true">
-                        @ticketStatChip(stats.Abierto, EstadoTicket.Abierto)
-                        @ticketStatChip(stats.EnProgreso, EstadoTicket.EnProgreso)
-                        @ticketStatChip(stats.Cerrado, EstadoTicket.Cerrado)
-                    </MudStack>
-                    
-                </MudStack>
-            </Authorized>
-        </AuthorizeView> 
+                    <MudGrid Class="pa-4">
+                        @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
+                        @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
+                        @ticketStatsCard(stats.Pendiente, EstadoTicket.Pendiente)
+                        @* Si esta habilitado la fecha de vecimiento se reemplazan por los tickets cerrados - menor importancias*@
+                        @if (configuracion?.UsarFechaVencimiento == true)
+                        {
+                            @statCard(Icons.Material.Filled.Schedule, stats.VencenHoy, "Vencen Hoy", "background:var(--estado-cerrado-bg); color:var(--estado-cerrado-txt)")
+                        }
+                        else
+                        {
+                            @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
+                        }
+                    </MudGrid>
 
-        <AuthorizeView Roles="Agente,Analista">
-            <Authorized>
-                @*Saludo al agente, le digo si tiene pendientes y su total*@
-                <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name @saludoEmpresa(configuracion?.NombreEmpresa)</MudText>
-                    <MudText Typo="Typo.h6" Color="Color.Default">@($"Tienes {stats.Total} tickets asignados! {pendingStatsAsk(stats.Pendiente)}")</MudText>
-                </MudStack>
+                </AuthorizeView>
 
-                @*Barra de estados*@
-                <MudGrid Class="pa-12">
-                    @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
-                    @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
-                    @ticketStatsCard(stats.Pendiente, EstadoTicket.Pendiente)
-                    @* Si esta habilitado la fecha de vecimiento se reemplazan por los tickets cerrados - menor importancias*@
-                    @if (configuracion?.UsarFechaVencimiento == true)
-                    {
-                        <MudItem xs="12" sm="6" md="3">
-                            <MudCard>
-                                <MudCardContent>
-                                    <MudStack>
-                                        <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.Schedule" /> </MudAvatar>
-                                    </MudStack>
-                                    <MudStack>
-                                        <MudText Typo="Typo.h6">@stats.VencenHoy</MudText>
-                                        <MudText Typo="Typo.body1">Vencen Hoy</MudText>
-                                    </MudStack>
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
-                    }
-                    else
-                    {
-                        @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
-                    }
-                </MudGrid>
-                
-            </Authorized>
-        </AuthorizeView>
+                <AuthorizeView Roles="Administrador,Gerente">
 
+                    @*Barra de estados*@
+                    <MudGrid Class="pa-4">
+                        @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
+                        @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
+                        @statCard(Icons.Material.Filled.PersonOff, stats.SinAsignar, "Sin Asignar", "background:var(--estado-cerrado-bg); color:var(--estado-cerrado-txt)")
+                        @if (configuracion?.UsarFechaVencimiento == true)
+                        {
+                            @statCard(Icons.Material.Filled.Schedule, stats.VencenHoy, "Vencen Hoy", "background:var(--alerta-bg); color:var(--alerta-txt)")
+                        }
+                        else
+                        {
+                            @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
+                        }
 
-        <AuthorizeView Roles="Administrador,Gerente">
-            <Authorized>
-                @*Saludo al admin, le digo si tiene pendientes y su total*@
-                <MudStack>
-                    <MudText Typo="Typo.h5" Color="Color.Primary">Hola, @context.User.Identity?.Name 
-                        @(saludoEmpresa(configuracion?.NombreEmpresa) ?? "Configure el nombre de su empresa en Configuracion")</MudText>
-                    
-                    <MudText Typo="Typo.h6" Color="Color.Default">@($"Resumen general del sistema - " +
-                                                                  $"{sinasignarStats(stats.SinAsignar)}")</MudText>
-                </MudStack>
+                    </MudGrid>
 
-                @*Barra de estados*@
-                <MudGrid Class="pa-12">
-                    @ticketStatsCard(stats.Abierto, EstadoTicket.Abierto)
-                    @ticketStatsCard(stats.EnProgreso, EstadoTicket.EnProgreso)
-                    @ticketStatsCard(stats.Cerrado, EstadoTicket.Cerrado)
-                    <MudItem xs="12" sm="6" md="3">
-                        <MudCard>
-                            <MudCardContent>
-                                <MudStack>
-                                    <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.PersonOff" /> </MudAvatar>
-                                </MudStack>
-                                <MudStack>
-                                    <MudText Typo="Typo.h6">@stats.SinAsignar</MudText>
-                                    <MudText Typo="Typo.body1">Sin Asignar</MudText>
-                                </MudStack>
-                            </MudCardContent>
-                        </MudCard>
-                    </MudItem>
-                    @if (configuracion?.UsarFechaVencimiento == true)
-                    {
-                        <MudItem xs="12" sm="6" md="3">
-                            <MudCard>
-                                <MudCardContent>
-                                    <MudStack>
-                                        <MudAvatar Color="Color.Default"><MudIcon Icon="@Icons.Material.Filled.Schedule" /> </MudAvatar>
-                                    </MudStack>
-                                    <MudStack>
-                                        <MudText Typo="Typo.h6">@stats.VencenHoy</MudText>
-                                        <MudText Typo="Typo.body1">Vencen Hoy</MudText>
-                                    </MudStack>
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
-                    }
-                </MudGrid>
+                </AuthorizeView>
 
-            </Authorized>
-        </AuthorizeView>
-
-        
-            <MudGrid Style="margin-top: 24px">
                 @if (ticketsRecientes is null)
                 {
                     <MudAlert Severity="Severity.Error"> No se pudieron cargar los tickets recientes</MudAlert>
@@ -163,84 +147,87 @@ else
                 }
                 else
                 {
-                    <MudItem xs="12" md="8">
-                        <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px">
-                            <MudTable T=TicketDto Items="ticketsRecientes"
-                                      Hover="true"
-                                      OnRowClick="@(fila => navigation.NavigateTo($"tickets/{fila.Item!.Id}"))">
-                                <ToolBarContent>
-                                    <AuthorizeView Roles="Cliente">
-                                        <MudText Typo="Typo.h6">Mis tickets</MudText>
-                                    </AuthorizeView>
-                                    <AuthorizeView Roles="Agente,Analista">
-                                        <MudText Typo="Typo.h6">Asignados a mi</MudText>
-                                    </AuthorizeView>
-                                    <AuthorizeView Roles="Administrador,Gerente">
-                                        <MudText Typo="Typo.h6">Tickets Recientes</MudText>
-                                    </AuthorizeView>
-                                    
-                                    <MudSpacer/>
-                                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                                        <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="CrearTicketAsync">
-                                            Nuevo Ticket
-                                        </MudButton>
-                                    </AuthorizeView>
-                                </ToolBarContent>
-                                @*Cabeceras*@
-                                <HeaderContent>
-                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
-                                    text-transform:uppercase; letter-spacing:.03em">
-                                        Titulo
-                                    </MudTh>
-                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
-                                    text-transform:uppercase; letter-spacing:.03em">
-                                        Categoria
-                                    </MudTh>
-                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
-                                    text-transform:uppercase; letter-spacing:.03em">
-                                        Estado
-                                    </MudTh>
-                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
-                                    text-transform:uppercase; letter-spacing:.03em">
-                                        Fecha
-                                    </MudTh>
-                                    
-                                </HeaderContent>
-                                
-                                <RowTemplate>
-                                    <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
-                                    <MudTd DataLabel="Categoria">
-                                        @if (context.CategoriaIcono is not null)
-                                        {
-                                            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.CategoriaIcono!)" Size="Size.Small"/>
-                                        }
-                                        else
-                                        {
-                                            <MudText>Sin Categoria</MudText>
-                                        }
+                    <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px">
+                        <MudTable T=TicketDto Items="ticketsRecientes"
+                                  Hover="true"
+                                  OnRowClick="@(fila => navigation.NavigateTo($"tickets/{fila.Item!.Id}"))">
 
-                                    </MudTd>
-                                    <MudTd DataLabel="Estado">
-                                        <MudChip T="string" Color="@context.Estado.GetColor()"
-                                                 Style="@EstadoChipStyle(context.Estado)">
-                                            @context.Estado
-                                        </MudChip>
-                                    </MudTd>
-                                    
-                                    <MudTd DataLabel="Fecha">@context.FechaCreacion.ToString("dd MMM")</MudTd>
-                                    
-                                </RowTemplate>
-                            </MudTable>
-                        </MudPaper>
-                        
-                    </MudItem>
-        }
+                            @*--------------TITULO DE TABLAS------------------------*@
+                            <ToolBarContent>
+                                <AuthorizeView Roles="Cliente">
+                                    <MudText Typo="Typo.h6">Mis tickets</MudText>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Agente,Analista">
+                                    <MudText Typo="Typo.h6">Asignados a mi</MudText>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Administrador,Gerente">
+                                    <MudText Typo="Typo.h6">Tickets Recientes</MudText>
+                                </AuthorizeView>
 
+                                <MudSpacer/>
+
+                                @*----------------BOTON DE CREAR TICKET EN TABLA-------------------------*@
+                                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                                    <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="CrearTicketAsync">
+                                        Nuevo Ticket
+                                    </MudButton>
+                                </AuthorizeView>
+                            </ToolBarContent>
+
+                            @*-----------------------------Cabeceras---------------------------------------*@
+                            <HeaderContent>
+                                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
+                                text-transform:uppercase; letter-spacing:.03em">
+                                    Titulo
+                                </MudTh>
+                                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
+                                text-transform:uppercase; letter-spacing:.03em">
+                                    Categoria
+                                </MudTh>
+                                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
+                                text-transform:uppercase; letter-spacing:.03em">
+                                    Estado
+                                </MudTh>
+                                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
+                                text-transform:uppercase; letter-spacing:.03em">
+                                    Fecha
+                                </MudTh>
+
+                            </HeaderContent>
+
+                            @*----------------------------------DATOS DE TABLA-------------------------------*@
+                            <RowTemplate>
+                                <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
+                                <MudTd DataLabel="Categoria">
+                                    @if (context.CategoriaIcono is not null)
+                                    {
+                                        <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.CategoriaIcono!)" Size="Size.Small"/>
+                                    }
+                                    else
+                                    {
+                                        <MudText>Sin Categoria</MudText>
+                                    }
+
+                                </MudTd>
+                                <MudTd DataLabel="Estado">
+                                    <MudChip T="string" Color="@context.Estado.GetColor()"
+                                             Style="@EstadoChipStyle(context.Estado)">
+                                        @context.Estado
+                                    </MudChip>
+                                </MudTd>
+
+                                <MudTd DataLabel="Fecha">@context.FechaCreacion.ToString("dd MMM")</MudTd>
+
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                }
+            </MudItem>
+            @* ---- COLUMNA DERECHA (4) ---- *@
             <MudItem xs="12" md="4">
                 <MudStack>
-                    @*Grafico Donut*@
-                    <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); 
-                    border-radius:16px; padding:20px ">
+                    @*----------------------------------Grafico Donut------------------------------------------------*@
+                    <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:20px ">
                         <MudText Style="font-size:16px; font-weight:600; color:#221F1A; align-self:flex-start">
                             Distribucion por estado
                         </MudText>
@@ -253,54 +240,53 @@ else
                         {
                             <div style="display:flex; justify-content:center; margin-top:16px;">
                                 <MudChart T="double" ChartType="ChartType.Donut"
-                                        ChartSeries="donutSeries"
-                                        ChartLabels="donutLabels"/>
+                                          ChartSeries="donutSeries"
+                                          ChartLabels="donutLabels"/>
                             </div>
-                            
+
                         }
                     </MudPaper>
-                    @*accesos rapidos*@
+
+                    @*-----------------------------------accesos rapidos-------------------------------------------*@
                     <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:18px ">
                         <MudText Style="font-size: 16px; font-weight: 600; color: #221F1A; margin-bottom: 12px"> Accesos Rapidos </MudText>
                         <MudStack>
-                            @*Solo para cliente*@
+                            @*-------------------Solo para cliente*@
                             <AuthorizeView Roles="Cliente">
                                 <Authorized>
-                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket", 
+                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket",
                                         () => CrearTicketAsync(), true)
-                                    @accesoRapido(Icons.Material.Filled.Assignment, "Mis Tickets", 
+                                    @accesoRapido(Icons.Material.Filled.Assignment, "Mis Tickets",
                                         () => navigation.NavigateTo("/tickets"), false)
                                 </Authorized>
                             </AuthorizeView>
 
-                            @*Solo para agentes*@
+                            @*------------------Solo para agentes*@
                             <AuthorizeView Roles="Agente,Analista">
                                 <Authorized>
-                                    @accesoRapido(Icons.Material.Filled.PersonSearch, "Ver mis Tickets", 
-                                        () => navigation.NavigateTo("/tickets"), true)
+                                    @accesoRapido(Icons.Material.Filled.PersonSearch, "Ver mis Tickets",
+                                        () => navigation.NavigateTo("/tickets/mios"), true)
                                 </Authorized>
                             </AuthorizeView>
 
-                            @*Solo para Administradores*@
+                            @*-----------------Solo para Administradores*@
                             <AuthorizeView Roles="Administrador,Gerente">
                                 <Authorized>
-                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket", 
+                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket",
                                         () => CrearTicketAsync(), true)
-                                    @accesoRapido(Icons.Material.Filled.PersonOff, "Tickets sin asignar", 
+                                    @accesoRapido(Icons.Material.Filled.PersonOff, "Tickets sin asignar",
                                         () => navigation.NavigateTo("/tickets/sinasignar"), false)
-                                    @accesoRapido(Icons.Material.Filled.People, "Gestionar usuarios", 
+                                    @accesoRapido(Icons.Material.Filled.People, "Gestionar usuarios",
                                         () => navigation.NavigateTo("/usuarios"), false)
-                                    
+
                                 </Authorized>
                             </AuthorizeView>
                         </MudStack>
                     </MudPaper>
-                </MudStack>    
-                
-            </MudItem>
-            
-        </MudGrid>
+                </MudStack>
 
+            </MudItem>
+        </MudGrid>
     </MudContainer>
     
        
@@ -386,25 +372,6 @@ else
         </MudChip>
     ;
 
-    //Fragment para agentes y admins
-    private RenderFragment ticketStatsCard(int Cantidad, EstadoTicket estado) =>
-        @<MudItem xs="12" sm="6" md="3">
-            <MudCard>
-                <MudCardContent>
-                        <MudStack>
-                            <MudAvatar Color="@estado.GetColor()">
-                                <MudIcon Icon="@(estado.GetIcons())"/>
-                            </MudAvatar>
-                        </MudStack>
-                        <MudStack>
-                            <MudText Typo="Typo.h6">@Cantidad</MudText>
-                            <MudText Typo="Typo.body1">@(pluralStats(Cantidad, estado))</MudText>
-                        </MudStack>
-                </MudCardContent>
-            </MudCard>  
-        </MudItem>
-    ;
-
     private RenderFragment accesoRapido(string icon, string label, Action onClick, bool esPrimario) =>
         @<div @onclick="onClick" style="@($"display:flex; " +
                                         $"align-items:center; " +
@@ -414,6 +381,26 @@ else
             <MudIcon Icon="@icon" Style="@($"color: {(esPrimario ? "var(--mud-palette-primary)" : "#756F63")}")"/>
             <span style="font-size: 13px; font-weight: 600; color:#221F1A">@label</span>
         </div>;
+    
+    //Fragment para agentes y admins
+    private RenderFragment ticketStatsCard(int cantidad, EstadoTicket estado) =>
+        statCard(estado.GetIcons(), cantidad, pluralStats(cantidad, estado), EstadoCardStyle(estado));
+    
+    //Cards de estadisticas
+    private RenderFragment statCard(string icon, int cantidad, string label, string colorStyle) =>
+        @<MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:18px;">
+                <MudStack>
+                    <MudAvatar Style="@colorStyle">
+                        <MudIcon Icon="@icon"/>
+                    </MudAvatar>
+                </MudStack>
+                <MudStack Spacing="2">
+                    <MudText Style="font-size:26px; font-weight:700; color:#221F1A">@cantidad</MudText>
+                    <MudText Style="font-size:13px; color:#756F63">@label</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>;
     #endregion
 
     #region funciones
@@ -492,6 +479,12 @@ else
     
     //Estilos para los chips
     string EstadoChipStyle(EstadoTicket estado) => 
+        $"border-radius:12px; padding:11px 16px; font-size:13px; " +
+        $"font-weight:600; " +
+        $"background:var(--estado-{estadoCssSufijo(estado)}-bg); " +
+        $"color:var(--estado-{estadoCssSufijo(estado)}-txt)";
+    //Estilos para las cards
+    string EstadoCardStyle(EstadoTicket estado) =>
         $"border-radius:12px; padding:11px 16px; font-size:13px; " +
         $"font-weight:600; " +
         $"background:var(--estado-{estadoCssSufijo(estado)}-bg); " +

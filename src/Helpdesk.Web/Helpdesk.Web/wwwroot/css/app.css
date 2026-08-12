@@ -28,6 +28,10 @@
     /*BORDES*/
     --borde-sutil: rgba(33,29,24,0.08);
     --accent-soft: #FBE7DA;
+
+    /*ALERTA*/
+    --alerta-bg: #FCE1E1;
+    --alerta-txt: #C6302F;
 }
 
 html, body {
