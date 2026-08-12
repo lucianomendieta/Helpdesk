@@ -71,7 +71,7 @@ public static class TicketEndpoints
 
         var usuarioInt = int.Parse(usuario);
 
-        query = FiltrarPorRol(query, rol, usuarioInt);
+        query = FiltrarPorRol(query, rol, usuarioInt,true);
 
         return Results.Ok(await query.Select(t => new TicketResponseDto(
                                                         t.Id,
@@ -722,15 +722,15 @@ public static class TicketEndpoints
     #endregion
 
     //Obtengo el query de ticket
-    private static IQueryable<Ticket> FiltrarPorRol(IQueryable<Ticket> query, string? rol, int usuarioId)
+    private static IQueryable<Ticket> FiltrarPorRol(IQueryable<Ticket> query, string? rol, int usuarioId, bool agenteVeTodos = false)
     {
-
+        
         //Si es cliente, solo ve sus propios tickets, si es agente/analista, solo los que se les asigno. Admin y Gerencia ve todos.
         if (rol == "Cliente")
         {
             query = query.Where(t => t.UsuarioCreo == usuarioId);
         }
-        else if (rol == "Agente" || rol == "Analista")
+        else if ((rol == "Agente" || rol == "Analista") && !agenteVeTodos)
         {
             query = query.Where(t => t.AgenteAsignadoId == usuarioId);
         }

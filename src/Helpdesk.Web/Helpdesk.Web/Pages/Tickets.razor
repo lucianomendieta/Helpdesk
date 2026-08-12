@@ -1,4 +1,5 @@
 ﻿@page "/tickets"
+@page "/tickets/{Filtro?}"
 @using Helpdesk.Web.Services;
 @using Helpdesk.Web.Dtos;
 @using Helpdesk.Web.Components;
@@ -139,14 +140,18 @@
                     }
                 </MudTd>
             }
-            
             <MudTd @onclick:stopPropagation="true">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                Color="Color.Secondary"
-                OnClick="@(() => ShowUpdateDialogAsync(context))"/>
-                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                Color="Color.Error"
-                OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
+                @if (PuedeGestionar(context))
+                {
+                    
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Secondary"
+                                   OnClick="@(() => ShowUpdateDialogAsync(context))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
+                    
+                }
             </MudTd>
         </RowTemplate>
         <PagerContent> 
@@ -220,7 +225,7 @@ else @*VISTA DE CARDS/TARJETAS*@
     private int? categoriaId;
     
     //Seteo el parametro y enum para parametrizar el endpoint de tickets
-    [Parameter, SupplyParameterFromQuery] public string? Asignacion { get; set; }
+    [Parameter] public string? Filtro { get; set; }
     private FiltroAsignacion filtroAsignacion = FiltroAsignacion.Todos;
 
     //seteo la configuracion de la entidad
@@ -230,22 +235,52 @@ else @*VISTA DE CARDS/TARJETAS*@
     private enum FiltroAsignacion
     {
         Todos,
-        SinAsignar
+        SinAsignar,
+        MisAsignados
     }
+    
+    //Helper de permisos
+    private bool PuedeGestionar(TicketDto t) => esGestorTotal || t.AgenteAsignadoId == usuarioActualId;
 
+    //Agentes para que puedan ver todos los tickets
+    [CascadingParameter] public Task<AuthenticationState>? authState { get; set; }
+    private int? usuarioActualId;
+    private bool esGestorTotal;
 
     protected override async Task OnInitializedAsync()
     {
         tickets = await ticketService.GetTicketsAsync();
         configuracion = await ConfiguracionService.GetConfiguracionAsync();
-        if(string.Equals(Asignacion, "sinasignar", StringComparison.OrdinalIgnoreCase)) //Si la asignacion es sin asignar se agrega al filtro
+        //consigo el id del usuario logueado
+        if (authState is not null)
         {
-            filtroAsignacion = FiltroAsignacion.SinAsignar;
+            var estado = await authState;
+            var idClaim = estado.User.FindFirst("nameid")?.Value;
+            esGestorTotal = estado.User.IsInRole("Administrador") || estado.User.IsInRole("Gerente");
+            if (int.TryParse(idClaim, out var id)) usuarioActualId = id;
         }
+        
+        
         var guardada = await storage.GetItemAsync("vistaTickets");
         if (!string.IsNullOrEmpty(guardada) && Enum.TryParse<VistasTickets>(guardada, out var v))
         {
             vista = v;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if(string.Equals(Filtro, "sinasignar", StringComparison.OrdinalIgnoreCase)) //Si la asignacion es sin asignar se agrega al filtro
+        {
+            filtroAsignacion = FiltroAsignacion.SinAsignar;
+        }
+        else if (string.Equals(Filtro, "mios", StringComparison.OrdinalIgnoreCase)) //Si es del usuario se agrega al filtro
+        {
+            filtroAsignacion = FiltroAsignacion.MisAsignados;
+        }
+        else
+        {
+            filtroAsignacion = FiltroAsignacion.Todos;
         }
     }
 
@@ -328,7 +363,13 @@ else @*VISTA DE CARDS/TARJETAS*@
         .Where(t => string.IsNullOrWhiteSpace(busqueda) || t.Titulo.Contains(busqueda!, StringComparison.OrdinalIgnoreCase))
         .Where(t => estadoTicket is null || t.Estado == estadoTicket)
         .Where(t => agenteId is null || t.AgenteAsignadoId == agenteId)
-        .Where(t => filtroAsignacion == FiltroAsignacion.Todos || t.AgenteAsignadoId is null)
+        .Where(t => filtroAsignacion switch
+        {
+            FiltroAsignacion.SinAsignar => t.AgenteAsignadoId is null,
+            FiltroAsignacion.MisAsignados => t.AgenteAsignadoId == usuarioActualId,
+                _ => true
+            
+        })
         .Where(t => categoriaId is null || t.CategoriaId == categoriaId);
 
 

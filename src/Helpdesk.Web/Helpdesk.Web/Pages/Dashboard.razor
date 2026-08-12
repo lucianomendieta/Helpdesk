@@ -35,7 +35,7 @@ else
                 </MudStack>
 
                 @*barra de estados y creado de ticket*@
-                <MudStack Row="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
                     @*Boton para crear un ticket nuevo*@
                     <MudButton StartIcon="@Icons.Material.Filled.Add" 
                                Variant="Variant.Filled"
@@ -152,7 +152,7 @@ else
         </AuthorizeView>
 
         
-            <MudGrid>
+            <MudGrid Style="margin-top: 24px">
                 @if (ticketsRecientes is null)
                 {
                     <MudAlert Severity="Severity.Error"> No se pudieron cargar los tickets recientes</MudAlert>
@@ -169,7 +169,16 @@ else
                                       Hover="true"
                                       OnRowClick="@(fila => navigation.NavigateTo($"tickets/{fila.Item!.Id}"))">
                                 <ToolBarContent>
-                                    <MudText Typo="Typo.h6">Tickets recientes</MudText>
+                                    <AuthorizeView Roles="Cliente">
+                                        <MudText Typo="Typo.h6">Mis tickets</MudText>
+                                    </AuthorizeView>
+                                    <AuthorizeView Roles="Agente,Analista">
+                                        <MudText Typo="Typo.h6">Asignados a mi</MudText>
+                                    </AuthorizeView>
+                                    <AuthorizeView Roles="Administrador,Gerente">
+                                        <MudText Typo="Typo.h6">Tickets Recientes</MudText>
+                                    </AuthorizeView>
+                                    
                                     <MudSpacer/>
                                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                                         <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="CrearTicketAsync">
@@ -185,30 +194,41 @@ else
                                     </MudTh>
                                     <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
                                     text-transform:uppercase; letter-spacing:.03em">
+                                        Categoria
+                                    </MudTh>
+                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
+                                    text-transform:uppercase; letter-spacing:.03em">
                                         Estado
                                     </MudTh>
                                     <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
                                     text-transform:uppercase; letter-spacing:.03em">
                                         Fecha
                                     </MudTh>
-                                    <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; 
-                                    text-transform:uppercase; letter-spacing:.03em">
-                                        Agente Asignado
-                                    </MudTh>
+                                    
                                 </HeaderContent>
                                 
                                 <RowTemplate>
                                     <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
+                                    <MudTd DataLabel="Categoria">
+                                        @if (context.CategoriaIcono is not null)
+                                        {
+                                            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.CategoriaIcono!)" Size="Size.Small"/>
+                                        }
+                                        else
+                                        {
+                                            <MudText>Sin Categoria</MudText>
+                                        }
+
+                                    </MudTd>
                                     <MudTd DataLabel="Estado">
                                         <MudChip T="string" Color="@context.Estado.GetColor()"
-                                                 Style="border-radius:12px; padding:11px 16px; font-size:13px; 
-                                                                       font-weight:600">
+                                                 Style="@EstadoChipStyle(context.Estado)">
                                             @context.Estado
                                         </MudChip>
                                     </MudTd>
                                     
                                     <MudTd DataLabel="Fecha">@context.FechaCreacion.ToString("dd MMM")</MudTd>
-                                    <MudTd DataLabel="NombreAgente">@(context.NombreAgente ?? "Sin Asignar")</MudTd>
+                                    
                                 </RowTemplate>
                             </MudTable>
                         </MudPaper>
@@ -219,9 +239,9 @@ else
             <MudItem xs="12" md="4">
                 <MudStack>
                     @*Grafico Donut*@
-                    <MudPaper Elevation="0" Style="max-width:350px; background:#fff; border:1px solid var(--borde-sutil); 
+                    <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); 
                     border-radius:16px; padding:20px ">
-                        <MudText Style="font-size:13px; font-weight:600; color:#221F1A; align-self:flex-start">
+                        <MudText Style="font-size:16px; font-weight:600; color:#221F1A; align-self:flex-start">
                             Distribucion por estado
                         </MudText>
                         @*Si no hay datos del donut, no se muestra nada*@
@@ -231,63 +251,46 @@ else
                         }
                         else
                         {
-                            <MudChart T="double" ChartType="ChartType.Donut" 
-                                      ChartSeries="donutSeries" 
-                                      ChartLabels="donutLabels"/> 
+                            <div style="display:flex; justify-content:center; margin-top:16px;">
+                                <MudChart T="double" ChartType="ChartType.Donut"
+                                        ChartSeries="donutSeries"
+                                        ChartLabels="donutLabels"/>
+                            </div>
+                            
                         }
                     </MudPaper>
                     @*accesos rapidos*@
                     <MudPaper Elevation="0" Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:18px ">
-                        <MudText Style="font-size: 13px; font-weight: 600; color: #221F1A; margin-bottom: 12px"> Accesos Rapidos </MudText>
+                        <MudText Style="font-size: 16px; font-weight: 600; color: #221F1A; margin-bottom: 12px"> Accesos Rapidos </MudText>
                         <MudStack>
                             @*Solo para cliente*@
                             <AuthorizeView Roles="Cliente">
                                 <Authorized>
-                                    <MudButton OnClick="CrearTicketAsync" StartIcon="@Icons.Material.Filled.Add"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer;
-                                                background:var(--accent-soft); color:var(--mud-palette-primary);">
-                                        Crear Ticket
-                                    </MudButton>
-                                    <MudButton Href="/tickets" StartIcon="@Icons.Material.Filled.Assignment"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer; background:#F8F5EE; color:#756F63">
-                                        Mis Tickets
-                                    </MudButton>
+                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket", 
+                                        () => CrearTicketAsync(), true)
+                                    @accesoRapido(Icons.Material.Filled.Assignment, "Mis Tickets", 
+                                        () => navigation.NavigateTo("/tickets"), false)
                                 </Authorized>
                             </AuthorizeView>
 
                             @*Solo para agentes*@
                             <AuthorizeView Roles="Agente,Analista">
                                 <Authorized>
-                                    <MudButton Href="/tickets" StartIcon="@Icons.Material.Filled.PersonSearch"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer;
-                                               background:var(--accent-soft); color:var(--mud-palette-primary);">
-                                        Ver mis tickets
-                                    </MudButton>
+                                    @accesoRapido(Icons.Material.Filled.PersonSearch, "Ver mis Tickets", 
+                                        () => navigation.NavigateTo("/tickets"), true)
                                 </Authorized>
                             </AuthorizeView>
 
                             @*Solo para Administradores*@
                             <AuthorizeView Roles="Administrador,Gerente">
                                 <Authorized>
-                                    <MudButton OnClick="CrearTicketAsync" StartIcon="@Icons.Material.Filled.Add"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer;
-                                               background:var(--accent-soft); color:var(--mud-palette-primary);">
-                                        Crear Ticket
-                                    </MudButton>
-                                    <MudButton Href="/tickets?asignacion=sinasignar" StartIcon="@Icons.Material.Filled.PersonOff"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer; background:#F8F5EE; color:#756F63">
-                                        Tickets sin asignar
-                                    </MudButton>
-                                    <MudButton Href="/usuarios" StartIcon="@Icons.Material.Filled.People"
-                                               Style="display:flex; align-items:center; gap:10px; 
-                                               padding:11px 12px; border-radius:10px; cursor:pointer; background:#F8F5EE; color:#756F63;">
-                                        Gestionar Usuarios
-                                    </MudButton>
+                                    @accesoRapido(Icons.Material.Filled.Add, "Crear Ticket", 
+                                        () => CrearTicketAsync(), true)
+                                    @accesoRapido(Icons.Material.Filled.PersonOff, "Tickets sin asignar", 
+                                        () => navigation.NavigateTo("/tickets/sinasignar"), false)
+                                    @accesoRapido(Icons.Material.Filled.People, "Gestionar usuarios", 
+                                        () => navigation.NavigateTo("/usuarios"), false)
+                                    
                                 </Authorized>
                             </AuthorizeView>
                         </MudStack>
@@ -372,16 +375,12 @@ else
         }
     }
 
-    
+    #region Renders
+    //================================RENDERS========================================
     //Para no repetir los chips, tood en la misma estructura
     private RenderFragment ticketStatChip(int Cantidad, EstadoTicket Estado) =>
         @<MudChip T="string" 
-                  Color="@Estado.GetColor()" 
-                  Variant="Variant.Filled"
-                  Style="border-radius:12px; 
-                  padding:11px 16px; 
-                  font-size:13px; 
-                  font-weight:600">
+                  Style="@EstadoChipStyle(Estado)">
             @*Si es mas de uno se pluraliza*@
             @Cantidad @(pluralStats(Cantidad, Estado))
         </MudChip>
@@ -393,7 +392,9 @@ else
             <MudCard>
                 <MudCardContent>
                         <MudStack>
-                            <MudAvatar Color="@estado.GetColor()"><MudIcon Icon="@(estado.GetIcons())"/> </MudAvatar>
+                            <MudAvatar Color="@estado.GetColor()">
+                                <MudIcon Icon="@(estado.GetIcons())"/>
+                            </MudAvatar>
                         </MudStack>
                         <MudStack>
                             <MudText Typo="Typo.h6">@Cantidad</MudText>
@@ -404,8 +405,18 @@ else
         </MudItem>
     ;
 
+    private RenderFragment accesoRapido(string icon, string label, Action onClick, bool esPrimario) =>
+        @<div @onclick="onClick" style="@($"display:flex; " +
+                                        $"align-items:center; " +
+                                        $"gap:10px; padding:11px 12px; border-radius:10px; " +
+                                        $"cursor:pointer; " +
+                                        $"background:{(esPrimario ? "var(--accent-soft)" : "#F8F5EE")}")">
+            <MudIcon Icon="@icon" Style="@($"color: {(esPrimario ? "var(--mud-palette-primary)" : "#756F63")}")"/>
+            <span style="font-size: 13px; font-weight: 600; color:#221F1A">@label</span>
+        </div>;
+    #endregion
 
-
+    #region funciones
     //============================Funciones================================
     //Pluralizo los estados
     string pluralStats(int Cantidad, EstadoTicket estado)
@@ -454,6 +465,7 @@ else
         }
     }
 
+    //Saludo de empresa si existe configuracion
     string? saludoEmpresa(string? empresa)
     {
         if (empresa is null)
@@ -465,4 +477,27 @@ else
             return $" - {empresa}";
         }
     }
+    
+    //Mapeo enum chips
+    string estadoCssSufijo(EstadoTicket estado) =>
+        estado switch
+        {
+            EstadoTicket.Abierto => "nuevo",
+            EstadoTicket.Pendiente => "pendiente",
+            EstadoTicket.EnProgreso => "enproceso",
+            EstadoTicket.Hecho => "hecho",
+            EstadoTicket.Cerrado => "cerrado"
+
+        };
+    
+    //Estilos para los chips
+    string EstadoChipStyle(EstadoTicket estado) => 
+        $"border-radius:12px; padding:11px 16px; font-size:13px; " +
+        $"font-weight:600; " +
+        $"background:var(--estado-{estadoCssSufijo(estado)}-bg); " +
+        $"color:var(--estado-{estadoCssSufijo(estado)}-txt)";
+
+    #endregion
+
+
 }

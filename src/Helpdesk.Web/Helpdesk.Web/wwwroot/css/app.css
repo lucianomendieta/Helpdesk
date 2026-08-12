@@ -26,7 +26,8 @@
     --prioridad-urgente-txt: #C6302F;
     
     /*BORDES*/
-    --borde-sutil: rgba(33,29,24,0.08)
+    --borde-sutil: rgba(33,29,24,0.08);
+    --accent-soft: #FBE7DA;
 }
 
 html, body {
