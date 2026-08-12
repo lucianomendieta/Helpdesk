@@ -16,24 +16,32 @@
 @inject IConfiguracionService ConfiguracionService;
 
 @attribute [Authorize]
-    
+
+
+@*------------------------------------------ Cabecera --------------------------------------*@
 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="pb-3">
-    <MudText Typo="Typo.h5">Tickets</MudText>
-    @*Filtro de busqueda*@
-    <MudTextField T="string" 
-                    @bind-Value="busqueda" 
-                    Immediate="true" 
-                    Placeholder="Buscar por titulo.." 
-                    Adornment="Adornment.Start" 
-                    AdornmentIcon="@Icons.Material.Filled.Search" 
-                    Margin="Margin.Dense" />
+   
+    <MudText Style="font-size:22px; font-weight:700; color:#221F1A">Tickets</MudText>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Style="border-radius:11px; padding:12px 20px; font-weight:700; font-size:13.5px"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenDialogAsync">
+        Crear Ticket
+    </MudButton>
+    
+</MudStack>
+
+@*------------------------------------------ Filtros -----------------------------------------*@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
     
     @*Filtro estado de ticket*@
     <MudSelect T="EstadoTicket?"
                @bind-Value="estadoTicket"
-                Placeholder="Todos los estados"
-                Margin="Margin.Dense">
-        
+               Placeholder="Todos los estados"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense">
+
         <MudSelectItem T="EstadoTicket?" Value="null">Todos los estados</MudSelectItem>
         @foreach (var estado in Enum.GetValues<EstadoTicket>())
         {
@@ -44,18 +52,22 @@
     @*Filtro de agentes*@
     <MudSelect T="int?"
                @bind-Value="agenteId"
-               Placeholder="Todos los agentes">
+               Placeholder="Todos los agentes"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense">
         <MudSelectItem T="int?" Value="null">Todos los agentes</MudSelectItem>
         @foreach (var agente in AgentesAsignados)
         {
             <MudSelectItem T="int?" Value="agente.AgenteAsignadoId">@agente.NombreAgente</MudSelectItem>
         }
     </MudSelect>
-    
-    @*Filtro de caetgorias*@
+
+    @*Filtro de categorias*@
     <MudSelect T="int?"
                @bind-Value="categoriaId"
-               Placeholder="Todas las categorias">
+               Placeholder="Todas las categorias"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense">
         <MudSelectItem T="int?" Value="null">Todas las categorias</MudSelectItem>
         @foreach (var categoria in CategoriasPresentes)
         {
@@ -63,31 +75,47 @@
         }
     </MudSelect>
     
+    @*Filtro de busqueda*@
+    <MudTextField T="string"
+                  @bind-Value="busqueda"
+                  Immediate="true"
+                  Placeholder="Buscar por titulo.."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Margin="Margin.Dense"
+                  Variant="Variant.Outlined"
+                  Style="flex: 1;"/>
+    
+    @*Toggle de vista*@
     <MudStack Row="true">
         <MudToggleGroup T="VistasTickets"
                         Value="vista"
                         ValueChanged="ChangeViewAsync">
-            <MudToggleItem Value="VistasTickets.Tabla" Text="Tabla" />
-            <MudToggleItem Value="VistasTickets.Tarjetas" Text="Tarjetas" />
+            
+            @*Vista de tabla*@
+            <MudToggleItem Value="VistasTickets.Tabla">
+                <MudIcon Icon="@Icons.Material.Filled.ViewList"/>
+            </MudToggleItem>
+            @*Vista de tarjetas*@
+            <MudToggleItem Value="VistasTickets.Tarjetas">
+                <MudIcon Icon="@Icons.Material.Filled.GridView"/>
+            </MudToggleItem>
         </MudToggleGroup>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="OpenDialogAsync">
-            Crear Ticket
-        </MudButton>
+
     </MudStack>
+    
 </MudStack>
 
-@if (vista == VistasTickets.Tabla) @*VISTA DE TABLA*@
+
+@*---------------------------------------------VISTA DE TABLA---------------------------------------------*@
+
+@if (vista == VistasTickets.Tabla) 
 {
         <MudTable T="TicketDto" Items="TicketsFiltrados" Hover="true" Bordered="true" Loading="tickets is null" OnRowClick="SelectedRow" >
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Titulo)">Titulo</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.CategoriaNombre)">Categoria</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaCreacion)">Fecha de Creacion</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreCreador)">Autor</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreAgente)">Asignado a</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Estado)">Estado</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Prioridad)">Prioridad</MudTableSortLabel></MudTh>
@@ -98,7 +126,6 @@
             
         </HeaderContent>
         <RowTemplate >
-            <MudTd DataLabel="ID">@context.Id</MudTd>
             <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
             <MudTd DataLabel="Categoria">
                 @if (context.CategoriaId is null)
@@ -114,10 +141,9 @@
                 }
             </MudTd>
             <MudTd DataLabel="Fecha de Creacion">@context.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
-            <MudTd DataLabel="Autor">@context.NombreCreador</MudTd>
             <MudTd DataLabel="Asignado a">@(context.NombreAgente ?? "Sin asignar")</MudTd>
             <MudTd DataLabel="Estado">
-                    <MudChip T="EstadoTicket">@context.Estado</MudChip>
+                    <MudChip T="EstadoTicket" Style="@context.Estado.ChipStyle(padding:"4px 9px", fontSize:"11px")">@context.Estado</MudChip>
             </MudTd>
             <MudTd DataLabel="Prioridad">
                 <MudStack Row="true">
@@ -177,7 +203,7 @@ else @*VISTA DE CARDS/TARJETAS*@
                             @*Muestro el titulo y estado en la misma fila*@
                             <MudStack Row="true" Justify="Justify.SpaceBetween">
                                 <MudText Typo="Typo.subtitle1">@ticket.Titulo</MudText>
-                                <MudChip T="EstadoTicket">@ticket.Estado</MudChip>
+                                <MudChip T="EstadoTicket" Style="@ticket.Estado.ChipStyle(padding:"4px 9px", fontSize:"11px")">@ticket.Estado</MudChip>
                             </MudStack>
                             @*Si la descripcion es mas de 80 caracteres, se agregan '...'*@
                             <MudText Typo="Typo.body2">

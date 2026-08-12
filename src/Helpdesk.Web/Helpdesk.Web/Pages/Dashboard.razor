@@ -211,7 +211,7 @@ else
                                 </MudTd>
                                 <MudTd DataLabel="Estado">
                                     <MudChip T="string" Color="@context.Estado.GetColor()"
-                                             Style="@EstadoChipStyle(context.Estado)">
+                                             Style="@context.Estado.ChipStyle(padding:"11px 16px", radius:"12px", fontSize:"13px")">
                                         @context.Estado
                                     </MudChip>
                                 </MudTd>
@@ -366,7 +366,7 @@ else
     //Para no repetir los chips, tood en la misma estructura
     private RenderFragment ticketStatChip(int Cantidad, EstadoTicket Estado) =>
         @<MudChip T="string" 
-                  Style="@EstadoChipStyle(Estado)">
+                  Style="@Estado.ChipStyle(padding:"11px 16px", radius:"12px", fontSize:"13px")">
             @*Si es mas de uno se pluraliza*@
             @Cantidad @(pluralStats(Cantidad, Estado))
         </MudChip>
@@ -384,7 +384,7 @@ else
     
     //Fragment para agentes y admins
     private RenderFragment ticketStatsCard(int cantidad, EstadoTicket estado) =>
-        statCard(estado.GetIcons(), cantidad, pluralStats(cantidad, estado), EstadoCardStyle(estado));
+        statCard(estado.GetIcons(), cantidad, pluralStats(cantidad, estado), estado.ChipStyle(padding:"11px 16px", radius:"12px", fontSize:"13px"));
     
     //Cards de estadisticas
     private RenderFragment statCard(string icon, int cantidad, string label, string colorStyle) =>
@@ -465,30 +465,7 @@ else
         }
     }
     
-    //Mapeo enum chips
-    string estadoCssSufijo(EstadoTicket estado) =>
-        estado switch
-        {
-            EstadoTicket.Abierto => "nuevo",
-            EstadoTicket.Pendiente => "pendiente",
-            EstadoTicket.EnProgreso => "enproceso",
-            EstadoTicket.Hecho => "hecho",
-            EstadoTicket.Cerrado => "cerrado"
-
-        };
-    
-    //Estilos para los chips
-    string EstadoChipStyle(EstadoTicket estado) => 
-        $"border-radius:12px; padding:11px 16px; font-size:13px; " +
-        $"font-weight:600; " +
-        $"background:var(--estado-{estadoCssSufijo(estado)}-bg); " +
-        $"color:var(--estado-{estadoCssSufijo(estado)}-txt)";
-    //Estilos para las cards
-    string EstadoCardStyle(EstadoTicket estado) =>
-        $"border-radius:12px; padding:11px 16px; font-size:13px; " +
-        $"font-weight:600; " +
-        $"background:var(--estado-{estadoCssSufijo(estado)}-bg); " +
-        $"color:var(--estado-{estadoCssSufijo(estado)}-txt)";
+   
 
     #endregion
 
