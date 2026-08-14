@@ -185,3 +185,26 @@ code {
 .mud-nav-item {
     margin-bottom: 4px;
 }
+
+/*Estilos de la tabla de tickets*/
+.mud-table-row {
+    border-top: 1px solid rgba(33,29,24,.05);
+}
+.mud-table-pagination-actions .mud-icon-button:hover {
+    background-color: var(--accent-soft);
+}
+.mud-table-pagination-actions .mud-icon-button {
+    color: var(--mud-palette-primary);
+}
+
+
+/*Estilos de las cards de tickets*/
+.ticket-card {
+    border: 2px solid var(--borde-sutil);
+    transition: border-color 0.2s ease;
+}
+
+.ticket-card:hover {
+    border-color: var(--mud-palette-primary);
+}
+

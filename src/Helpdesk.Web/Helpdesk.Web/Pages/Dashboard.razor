@@ -168,7 +168,16 @@ else
 
                                 @*----------------BOTON DE CREAR TICKET EN TABLA-------------------------*@
                                 <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                                    <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="CrearTicketAsync">
+                                    <MudButton StartIcon="@Icons.Material.Filled.Add"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               OnClick="CrearTicketAsync"
+                                               Style="background:var(--mud-palette-primary);
+                                           color:#fff;
+                                           font-weight:700;
+                                           border-radius:13px;
+                                           padding:10px 22px;
+                                           box-shadow:0 4px 12px;">
                                         Nuevo Ticket
                                     </MudButton>
                                 </AuthorizeView>

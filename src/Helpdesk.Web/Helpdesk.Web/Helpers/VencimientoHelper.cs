@@ -24,7 +24,7 @@ public static class VencimientoHelper
         {FechaVencimiento: null} => "",
         _ when ticket.FechaVencimiento.Value.Date < hoy => "Vencido",
         _ when ticket.FechaVencimiento.Value.Date == hoy => "Vence hoy",
-        _ => ticket.FechaVencimiento.Value.Date.ToString("dd/MM/yyyy")
+        _ => ticket.FechaVencimiento.Value.Date.ToString("dd MMM")
     };
 
 }   

@@ -33,7 +33,7 @@
 </MudStack>
 
 @*------------------------------------------ Filtros -----------------------------------------*@
-<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 20px">
     
     @*Filtro estado de ticket*@
     <MudSelect T="EstadoTicket?"
@@ -111,46 +111,56 @@
 
 @if (vista == VistasTickets.Tabla) 
 {
-        <MudTable T="TicketDto" Items="TicketsFiltrados" Hover="true" Bordered="true" Loading="tickets is null" OnRowClick="SelectedRow" >
+    <div style="background:#fff; border:2px solid var(--borde-sutil); border-radius:16px; overflow:hidden">
+        <MudTable T="TicketDto" Items="TicketsFiltrados" Hover="true" Loading="tickets is null" OnRowClick="SelectedRow" Dense="true">
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Titulo)">Titulo</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.CategoriaNombre)">Categoria</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaCreacion)">Fecha de Creacion</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreAgente)">Asignado a</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Estado)">Estado</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Prioridad)">Prioridad</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Titulo)">Titulo</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.CategoriaNombre)">Categoria</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Estado)">Estado</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.Prioridad)">Prioridad</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.NombreAgente)">Asignado a</MudTableSortLabel></MudTh>
+            <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaCreacion)">Fecha de Creacion</MudTableSortLabel></MudTh>
+            
+            
+            
             @if (configuracion?.UsarFechaVencimiento == true)
             {
-                <MudTh><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaVencimiento)">Fecha de vencimiento</MudTableSortLabel></MudTh>
+                <MudTh Style="font-size:11px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em"><MudTableSortLabel SortBy="new Func<TicketDto, object>(x => x.FechaVencimiento)">Fecha de vencimiento</MudTableSortLabel></MudTh>
             }
             
         </HeaderContent>
         <RowTemplate >
-            <MudTd DataLabel="Titulo">@context.Titulo</MudTd>
+            <MudTd DataLabel="Titulo" Style="font-weight:normal">@context.Titulo</MudTd>
             <MudTd DataLabel="Categoria">
                 @if (context.CategoriaId is null)
                 {
-                    <MudText>Sin categoria</MudText>
+                    <MudText Style="font-size: 13px" >Sin categoria</MudText>
                 }
                 else
                 {
                     <MudStack Row="true">
                         <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(context.CategoriaIcono!)" Size="Size.Small" />
-                        <MudText>@context.CategoriaNombre</MudText>
+                        <MudText Style="font-size: 13px">@context.CategoriaNombre</MudText>
                     </MudStack>
                 }
             </MudTd>
-            <MudTd DataLabel="Fecha de Creacion">@context.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
-            <MudTd DataLabel="Asignado a">@(context.NombreAgente ?? "Sin asignar")</MudTd>
             <MudTd DataLabel="Estado">
-                    <MudChip T="EstadoTicket" Style="@context.Estado.ChipStyle(padding:"4px 9px", fontSize:"11px")">@context.Estado</MudChip>
+                <MudChip T="EstadoTicket" Style="@context.Estado.ChipStyle(padding:"4px 9px", fontSize:"11px")">@context.Estado</MudChip>
             </MudTd>
             <MudTd DataLabel="Prioridad">
+                <MudChip T="PrioridadTicket" Style="@context.Prioridad.ChipStyle()">@context.Prioridad</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Asignado a">
+                
                 <MudStack Row="true">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@context.Prioridad.GetColor()" Size="Size.Small"/>
-                    <MudText>@context.Prioridad</MudText>
+                    <MudAvatar Size="Size.Small">@InicialHelper.InicialesHelper(context.NombreAgente)</MudAvatar>
+                    <MudText Style="font-size: 13px">@(context.NombreAgente ?? "Sin Asignar")</MudText>
                 </MudStack>
             </MudTd>
+            <MudTd DataLabel="Fecha de Creacion">@context.FechaCreacion.ToString("dd MMM")</MudTd>
+            
+            
+            
             @*FECHA DE VENCIMIENTO*@
             @if (configuracion?.UsarFechaVencimiento == true)
             {
@@ -169,21 +179,25 @@
             <MudTd @onclick:stopPropagation="true">
                 @if (PuedeGestionar(context))
                 {
-                    
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Secondary"
-                                   OnClick="@(() => ShowUpdateDialogAsync(context))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error"
-                                   OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
-                    
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Style="color:var(--mud-palette-primary)"
+                                       OnClick="@(() => ShowUpdateDialogAsync(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Style="color:var(--alerta-txt)"
+                                       OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
+                    </MudStack>
                 }
             </MudTd>
         </RowTemplate>
         <PagerContent> 
-            <MudTablePager PageSizeOptions="new int[] {5, 10, 25}"/>
+            <MudTablePager PageSizeOptions="new int[] {5, 10, 25}"
+                           RowsPerPageString="Filas por página:"
+                           InfoFormat="{first_item}-{last_item} de {all_items}"/>
         </PagerContent>
     </MudTable>
+    </div>
+        
 }
 else @*VISTA DE CARDS/TARJETAS*@
 {
@@ -198,33 +212,44 @@ else @*VISTA DE CARDS/TARJETAS*@
             @foreach (var ticket in TicketsFiltrados)
             {
                 <MudItem xs="12" md="3">
-                    <MudCard @onclick="@(() => NavigateToDetail(ticket.Id))" Style="cursor:pointer">
-                        <MudCardContent>
+                    <MudCard @onclick="@(() => NavigateToDetail(ticket.Id))" Elevation="0" 
+                             Class="ticket-card"
+                             Style="cursor:pointer; 
+                                    border-radius:14px; height: 100%; min-height: 260px; display:flex; flex-direction:column">
+                        <MudCardContent Style="display:flex; flex-direction:column; height:100%">
                             @*Muestro el titulo y estado en la misma fila*@
                             <MudStack Row="true" Justify="Justify.SpaceBetween">
-                                <MudText Typo="Typo.subtitle1">@ticket.Titulo</MudText>
+                                <MudText Style="font-weight:700; font-size:15px; color:#221F1A">@ticket.Titulo</MudText>
                                 <MudChip T="EstadoTicket" Style="@ticket.Estado.ChipStyle(padding:"4px 9px", fontSize:"11px")">@ticket.Estado</MudChip>
                             </MudStack>
                             @*Si la descripcion es mas de 80 caracteres, se agregan '...'*@
                             <MudText Typo="Typo.body2">
                                 @(ticket.Descripcion.Length > 80 ? ticket.Descripcion[..80] + "..." : ticket.Descripcion)
                             </MudText>
-                            @*Chip de prioridad*@
-                            <MudStack Row="true">
-                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket.Prioridad.GetColor()" />
-                                <MudText>@ticket.Prioridad</MudText>
-                            </MudStack>
+                            
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                                @*CATEGORIA*@
                                 @if (ticket.CategoriaId is not null)
                                 {
-                                    <MudChip T="string" Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(ticket.CategoriaIcono!)">
+                                    <MudChip T="string" Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(ticket.CategoriaIcono!)" Size="Size.Small">
                                         @ticket.CategoriaNombre
                                     </MudChip>
                                 }
-                            @if (configuracion?.UsarFechaVencimiento == true && ticket.FechaVencimiento is not null)
-                            {
-                                <MudChip T="string" Color="@ticket.GetVencimientoColor()"> @ticket.GetVencimientoTexto()</MudChip>
-                            }
-                            <MudDivider Class="my-2"/>
+                                @*FECHA DE VENCIMIENTO*@
+                                @if (configuracion?.UsarFechaVencimiento == true && ticket.FechaVencimiento is not null)
+                                {
+                                    <MudChip T="string" Color="@ticket.GetVencimientoColor()" Size="Size.Small"> @ticket.GetVencimientoTexto()</MudChip>
+                                }
+                            </MudStack>
+                            
+                            @*Espaciado*@
+                            
+                            <MudDivider Class="my-2" Style="margin-top: auto;"/>
+                            @*Chip de prioridad*@
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="margin-bottom: 8px">
+                                <span style="width:7px; height:7px; border-radius:50%; background:@ticket.Prioridad.TextColor()"/>
+                                <MudText Style="@($"color:{ticket.Prioridad.TextColor()}; font-weight:600; font-size:12px;")">@ticket.Prioridad</MudText>
+                            </MudStack>
                             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudStack Row="true">
                                     <MudAvatar Size="Size.Small">@InicialHelper.InicialesHelper(ticket.NombreAgente)</MudAvatar>
@@ -239,6 +264,8 @@ else @*VISTA DE CARDS/TARJETAS*@
         </MudGrid>
     }
 }
+
+
 
 @code {
     private TicketDto[]? tickets;
@@ -411,5 +438,7 @@ else @*VISTA DE CARDS/TARJETAS*@
         .Where(t => t.CategoriaId is not null)
         .DistinctBy(t => t.CategoriaId);
 
+    
+    
 }
             
