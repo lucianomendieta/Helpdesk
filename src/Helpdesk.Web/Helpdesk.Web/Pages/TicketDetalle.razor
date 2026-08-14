@@ -35,34 +35,44 @@ else if (estadoResponse == EstadoResponse.NoEncontrado)
 }
 else
 {
-    <MudLink Href="/tickets">← Volver a tickets</MudLink>
+    @*---------------------------------------------Cabecera-----------------------------------------------------*@
+    <MudStack @onclick="@(() => navigationManager.NavigateTo("/tickets"))"
+              AlignItems="AlignItems.Center"
+              Row="true"
+              Spacing="1"
+              Style="color:var(--mud-palette-primary); font-weight:600; font-size:13px; cursor:pointer">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Style="font-size:17px"/>
+        <MudText>Volver a tickets</MudText>
+        
+    </MudStack>
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudStack>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">TICKET #@Id</MudText>
-            <MudText Typo="Typo.h4">@ticket?.Titulo</MudText>
-        </MudStack>
-        <MudStack Row="true">
-            <MudChip T="string">@ticket?.Estado</MudChip>
-            <MudStack Row="true">
-                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()" />
-                <MudText>@ticket!.Prioridad</MudText>
-            </MudStack>
+            <MudText Style="font-size:14px; color:#948C7D">Ticket #@Id</MudText>
+            <MudText Typo="Typo.h4" Style="font-size:25px; font-weight:700; color:#221F1A">@ticket?.Titulo</MudText>
         </MudStack>
     </MudStack>
+    
+    @*------------------------------------COLUMNAS------------------------------------------------------*@
     <MudGrid>
         <MudItem xs="12" md="8">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.overline" Color="Color.Secondary">Descripcion</MudText>
-                <MudText Typo="Typo.h4">@ticket?.Descripcion</MudText>
+            <MudPaper Style="padding: 22px; background:#fff; border:1px solid var(--borde-sutil); border-radius:16px;">
+                <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em">
+                    Descripción
+                </MudText>
+                <MudText Style="font-size:14px; color:#221F1A; line-height:1.55">
+                    @ticket?.Descripcion
+                </MudText>
             </MudPaper>
-            <MudStack>
-                <MudText Typo="Typo.h5" Color="Color.Secondary">Imagenes Adjuntas</MudText>
-                <GaleriaAdjuntos TicketId="Id" />
-                <MudText Typo="Typo.h5" Color="Color.Secondary">Documentos Adjuntos</MudText>
-                <ListaDocumentos TicketId="Id" />
-            </MudStack>
             
-            <MudText Typo="Typo.h6" Class="mt-4">Historial</MudText>
+            @*-----------------------------------------Card de adjuntos-------------------------------------*@
+            <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px">
+                <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
+                    Adjuntos
+                </MudText>
+                <GaleriaAdjuntos TicketId="Id" />
+                <ListaDocumentos TicketId="Id" />
+            </MudPaper>
+            
             @if (ticketDetalles is null)
             {
                 <MudProgressLinear Indeterminate="true" />
@@ -73,28 +83,29 @@ else
             }
             else
             {
-                <MudTimeline>
-                    @foreach (var detalle in ticketDetalles)
-                    {
-                        @*Armo la timeline, diferencio de los internos para no mostrar internos a clientes*@
-                        <MudTimelineItem>
-                            <MudPaper Class="pa-3" Style="@(detalle.EsInterno ? "background-color: var(--mud-palette-warning-lighten);" : null)">
+                <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px">
+                    @*-------------------------------------TITULO---------------------------------------------*@
+                    <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
+                        Actividad y comentarios
+                    </MudText>
+                    
+                    @*----------------------------------------TIMELINE-------------------------------------------*@
+                    <MudStack Spacing="3">
+                        @foreach (var detalle in ticketDetalles)
+                        {
+                            <div style="@($"border-radius:12px; padding:12px 14px; background:{(detalle.EsInterno ? "#FBF1D6" : "#F8F5EE")}")">
                                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                                    <MudStack Row="true">
-                                        <MudText Typo="Typo.subtitle2">@detalle.NombreAutor</MudText>
-                                        <MudChip T="string" Size="Size.Small">@detalle.RolAutor</MudChip>
-                                        @if (detalle.EsInterno)
-                                        {
-                                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Interno</MudChip>
-                                        }
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudText Style="font-size:13px; font-weight:700; color:#221F1A">@detalle.NombreAutor</MudText>
                                     </MudStack>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@detalle.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
+                                    <MudText Style="font-size:11px; color:#948C7D">@detalle.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
                                 </MudStack>
-                                <MudText>@detalle.Comentario</MudText>
-                            </MudPaper>
-                        </MudTimelineItem>
-                    }
-                </MudTimeline>                    
+                                <MudText Style="font-size:13.5px; color:#221F1A; line-height:1.5; margin-top:5px">@detalle.Comentario</MudText>
+                            </div>
+                        }
+                    </MudStack>
+                </MudPaper>
+                                    
             }
 
                 <MudPaper Class="pa-4 mt-4">

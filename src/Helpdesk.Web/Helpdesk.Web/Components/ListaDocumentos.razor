@@ -29,7 +29,7 @@ else
                         Style="border-style: dashed; cursor: pointer; width:100px; height:100px" 
                         @onclick="@(() => context.OpenFilePickerAsync())"
                         Class="d-flex flex-column align-content-center justify-content-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" />
+                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Style="color:#C1571F; font-size:22px" />
                                     <MudText>Adjuntar Pdf</MudText>
                                 </MudPaper>
                             </CustomContent>
@@ -47,21 +47,26 @@ else
 
         @foreach (var doc in documentos)
         {
-            <MudPaper Outlined="true" Class="pa-2">
+            <div style="padding:10px 0; border-top:1px solid rgba(33,29,24,.06)">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" />
-                    <MudText>@doc.NombreOriginal</MudText>
-                    <MudText Typo="Typo.caption">@FormatearTamanio(doc.TamanioBytes)</MudText>
+                    <MudStack Spacing="0" Style="flex: 1;">
+                        <MudText Style="font-size:13px; font-weight:500; color:#221F1A;">@doc.NombreOriginal</MudText>
+                        <MudText Style="font-size:11px; color:#948C7D">@FormatearTamanio(doc.TamanioBytes)</MudText>
+                    </MudStack>
+                    
 
                     <MudSpacer />
 
-                    <MudChip T="string"
-                             Icon="@Icons.Material.Filled.Visibility"
-                             Color="Color.Primary"
-                             Variant="Variant.Text"
-                             OnClick="@(() => VerAsync(doc))">Ver</MudChip>
+                    <div style="font-size:12px; font-weight:600; color:var(--mud-palette-primary); padding:7px 12px; 
+                    border:1px solid rgba(33,29,24,.1); border-radius:9px; cursor:pointer"
+                         @onclick="@(() => VerAsync(doc))">
+                        Ver
+                    </div>
                 </MudStack>
-            </MudPaper>
+            </div>
+                
+           
         }
     </MudStack>
 }

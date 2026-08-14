@@ -17,7 +17,7 @@ else if (adjuntos is null)
 }
 else
 {
-    <MudStack Row="true" Wrap="Wrap.Wrap">
+    <MudStack Row="true" Wrap="Wrap.Wrap" Style="gap: 10px;margin-bottom: 15px">
         <MudFileUpload T="IBrowserFile"
                        FilesChanged="UploadAsync"
                        Accept=".jpg,.jpeg,.png,.webp"
@@ -25,13 +25,13 @@ else
                        @ref="fileUpload"> 
             
             <CustomContent>
-                <MudPaper Outlined="true" 
-                    Style="border-style: dashed; cursor: pointer; width:100px; height:100px" 
+                <MudPaper
+                    Style="background:repeating-linear-gradient(135deg,#EDE9DF,#EDE9DF 8px,#E4DFD2 8px,#E4DFD2 16px); border:1px solid rgba(33,29,24,.08); border-radius:12px; cursor: pointer; width:100px; height:100px" 
                     @onclick="@(() => context.OpenFilePickerAsync())"
                     Class="d-flex flex-column align-content-center justify-content-center"
                     >
-                    <MudIcon Icon="@Icons.Material.Filled.Image" />
-                    <MudText>Adjuntar imagen</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Image" Style="color:#948C7D" Size="Size.Small" />
+                    <MudText Style="font-size: 9px; color: #948C7D">Adjuntar imagen</MudText>
                 </MudPaper>
             </CustomContent>
                    
@@ -54,7 +54,7 @@ else
                     ObjectFit="ObjectFit.Cover" 
                     Class="rounded" 
                     @onclick="@(() => AbrirPreviaAsync(url, adjunto))"
-                    Style="cursor: pointer;"/>
+                    Style="cursor: pointer; border-radius:12px; border:1px solid var(--borde-sutil)"/>
             }
         }
     </MudStack>
