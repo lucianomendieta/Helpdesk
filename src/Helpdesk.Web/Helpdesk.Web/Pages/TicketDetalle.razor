@@ -55,7 +55,7 @@ else
     @*------------------------------------COLUMNAS------------------------------------------------------*@
     <MudGrid>
         <MudItem xs="12" md="8">
-            <MudPaper Style="padding: 22px; background:#fff; border:1px solid var(--borde-sutil); border-radius:16px;">
+            <MudPaper Style="padding: 22px; background:#fff; border:1px solid var(--borde-sutil); border-radius:16px;  margin-top: 15px;">
                 <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em">
                     Descripción
                 </MudText>
@@ -65,7 +65,7 @@ else
             </MudPaper>
             
             @*-----------------------------------------Card de adjuntos-------------------------------------*@
-            <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px">
+            <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px;  margin-top: 15px;">
                 <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
                     Adjuntos
                 </MudText>
@@ -73,21 +73,23 @@ else
                 <ListaDocumentos TicketId="Id" />
             </MudPaper>
             
-            @if (ticketDetalles is null)
-            {
-                <MudProgressLinear Indeterminate="true" />
-            }
-            else if (ticketDetalles.Length == 0)
-            {
-                <MudText>Todavia no hay comentarios.</MudText>
-            }
-            else
-            {
-                <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px">
-                    @*-------------------------------------TITULO---------------------------------------------*@
-                    <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
-                        Actividad y comentarios
-                    </MudText>
+            <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px;  margin-top: 15px;">
+
+                @*-------------------------------------TITULO---------------------------------------------*@
+                <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
+                    Actividad y comentarios
+                </MudText>
+                @if (ticketDetalles is null)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (ticketDetalles.Length == 0)
+                {
+                    <MudText>Todavia no hay comentarios.</MudText>
+                }
+                else
+                {
+                    
                     
                     @*----------------------------------------TIMELINE-------------------------------------------*@
                     <MudStack Spacing="3">
@@ -104,110 +106,158 @@ else
                             </div>
                         }
                     </MudStack>
-                </MudPaper>
-                                    
-            }
-
-                <MudPaper Class="pa-4 mt-4">
-                    <MudForm @ref="form" @bind-IsValid="isvalid">
-                        <MudTextField @bind-Value="detalleDto.Comentario" Lines="3" Placeholder="Escribi un comentario..." Required="true" />
-                        <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                            <MudSwitch @bind-Value="detalleDto.EsInterno" Label="Comentario Interno" Color="Color.Warning"/>
-                        </AuthorizeView>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AgregarComentarioAsync">Agregar comentario</MudButton>
-                    </MudForm>
-                </MudPaper>
-
+                }
+                <MudForm @ref="form" @bind-IsValid="isvalid" >
+                    <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:12px; padding:12px 14px; margin-top: 15px" >
+                        <MudTextField @bind-Value="detalleDto.Comentario" 
+                                      Lines="3" 
+                                      Variant="Variant.Text" 
+                                      Underline="false"
+                                      Placeholder="Escribi un comentario..." Required="true"/>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                                <div @onclick="@(() => detalleDto.EsInterno = !detalleDto.EsInterno)"
+                                     style="@($"display:flex; align-items:center; gap:8px; font-size:12.5px; " +
+                                            $"font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; " +
+                                            $"background:{(detalleDto.EsInterno ? "#FBF1D6" : "#F0EDE4")}; " +
+                                            $"color:{(detalleDto.EsInterno ? "#8A6D18" : "#756F63")}")">
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size: 16px" />
+                                    <MudText>Nota interna (solo staff)</MudText>
+                                </div>
+                            </AuthorizeView>
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       OnClick="AgregarComentarioAsync"
+                                       Style="border-radius:10px; padding:9px 18px; font-weight:700; font-size:13px">Agregar comentario</MudButton>
+                        </MudStack>
+                    </div>
+                </MudForm>
                 
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4">
-                <MudText Class="mt-3" Typo="Typo.overline" Color="Color.Secondary">Detalles</MudText>
-                @*Nombre del cliente*@
-                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Cliente</MudText>
-                <MudText Class="mt-3" Typo="Typo.body1">@ticket?.NombreCreador</MudText>
-                
-                @*Creado en fecha:*@
-                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de creacion</MudText>
-                <MudText Class="mt-3" Typo="Typo.body1">@ticket?.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
             
-                @*Fecha de vencimiento (si tiene)*@
-                @if (configuracion?.UsarFechaVencimiento == true)
-                {
-                    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Fecha de vencimiento</MudText>
+            </MudPaper>
+
+            
+        </MudItem>
+        @*--------------------------------PROPIEDADES----------------------------------------------*@
+        <MudItem xs="12" md="4">
+            <MudPaper Style="padding: 22px; background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; gap: 14px;">
+                <MudStack Spacing="3">
+                    <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em;">
+                        Propiedades
+                    </MudText>
+
+                    @*ESTADO DEL TICKET*@
+                    <MudText Style="font-size:11.5px; color:#948C7D">Estado</MudText>
                     <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
                         <Authorized>
-                            <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)" DateChanged="ChangeVencimientoAsync" Clearable="true" />
+                            <div style="@ticket!.Estado.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
+                                <MudSelect T="EstadoTicket" Variant="Variant.Text" Value="ticket!.Estado" 
+                                           Underline="false" ValueChanged="ChangeEstadoAsync" Margin="Margin.Dense">
+                                    @foreach (var estado in Enum.GetValues<EstadoTicket>())
+                                    {
+                                        <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </div>
                         </Authorized>
                         <NotAuthorized>
-                            <MudText Class="mt-2" Color="Color.Secondary" Typo="Typo.body1">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
+                            <MudChip T="string">@ticket?.Estado</MudChip>
                         </NotAuthorized>
                     </AuthorizeView>
-                }
-                
-                @*ESTADO DEL TICKET*@
-                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Estado</MudText>
-                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                    <Authorized>
-                        <MudSelect T="EstadoTicket" Value="ticket!.Estado" ValueChanged="ChangeEstadoAsync">
-                            @foreach (var estado in Enum.GetValues<EstadoTicket>())
-                            {
-                                <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </Authorized>
-                    <NotAuthorized>
-                        <MudChip T="string">@ticket?.Estado</MudChip>
-                    </NotAuthorized>
-                </AuthorizeView>
-                
-                @*PRIORIDAD*@
-                <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Secondary">Prioridad</MudText>
-                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                    <Authorized>
-                        <MudSelect T="PrioridadTicket" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
-                            @foreach (var p in Enum.GetValues<PrioridadTicket>())
-                            {
-                                <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </Authorized>
-                    <NotAuthorized>
-                        <MudStack Row="true">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()" />
-                            <MudText>@ticket!.Prioridad</MudText>
-                        </MudStack>
-                    </NotAuthorized>
-                </AuthorizeView>
-                
+
+                    @*PRIORIDAD*@
+                    <MudText Style="font-size:11.5px; color:#948C7D">Prioridad</MudText>
+                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                        <Authorized>
+                            <div style="@ticket!.Prioridad.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
+                                <MudSelect T="PrioridadTicket" Variant="Variant.Text" Margin="Margin.Dense" 
+                                           Underline="false" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
+                                    @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                                    {
+                                        <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </div>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudStack Row="true">
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()"/>
+                                <MudText>@ticket!.Prioridad</MudText>
+                            </MudStack>
+                        </NotAuthorized>
+                    </AuthorizeView>
+
                     @*ASIGNACION DE AGENTES*@
-                <AuthorizeView Roles="Administrador,Gerente">
-                    <Authorized>
-                        <MudSelect T="int?" Label="Agente" Value="ticket!.AgenteAsignadoId" ValueChanged="AsignarAgenteAsync">
-                            <MudSelectItem T="int?" Value="@((int?)null)">Sin asignar</MudSelectItem>
-                            @foreach (var agente in agentes ?? [])
-                            {
-                                <MudSelectItem T="int?" Value="@agente.Id">@agente.NombrePila @agente.ApellidoPila</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </Authorized>
-                </AuthorizeView>
-                
+                    <MudText Style="font-size:11.5px; color:#948C7D">Agente</MudText>
+                    <AuthorizeView Roles="Administrador,Gerente">
+                        <Authorized>
+                            <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px; display:flex; 
+                            align-items:center; gap:8px; padding-left:10px">
+                                <MudAvatar Size="Size.Small">
+                                    @InicialHelper.InicialesHelper(AgenteActual?.NombrePila + " " + AgenteActual?.ApellidoPila)
+                                </MudAvatar>
+                                <MudSelect T="int?" Variant="Variant.Text" Margin="Margin.Dense" Underline="false"
+                                           Value="ticket!.AgenteAsignadoId" ValueChanged="AsignarAgenteAsync">
+                                    <MudSelectItem T="int?" Value="@((int?)null)">Sin asignar</MudSelectItem>
+                                    @foreach (var agente in agentes ?? [])
+                                    {
+                                        <MudSelectItem T="int?" Value="@agente.Id">@agente.NombrePila @agente.ApellidoPila</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+
                     @*SELECT DE CATEGORIAS*@
-                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                    <Authorized>
-                        <MudSelect T="int?" Label="Categoria" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
-                            @if (categorias is not null)
-                            {
-                                @foreach (var c in categorias)
-                                {
-                                    <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
-                                }
-                            }
-                        </MudSelect>       
-                    </Authorized>
-                </AuthorizeView>
+                    <MudText Style="font-size:11.5px; color:#948C7D">Categoria</MudText>
+                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                        <Authorized>
+                            <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px; padding-left:12px">
+                                <MudSelect T="int?" Variant="Variant.Text" Margin="Margin.Dense" 
+                                           Underline="false" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
+                                    @if (categorias is not null)
+                                    {
+                                        @foreach (var c in categorias)
+                                        {
+                                            <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    @*Nombre del cliente*@
+                    <MudText Style="font-size:11.5px; color:#948C7D">Cliente</MudText>
+                    <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@ticket?.NombreCreador</MudText>
+
+                    @*Fecha de vencimiento (si tiene)*@
+                    @if (configuracion?.UsarFechaVencimiento == true)
+                    {
+                        <MudText Style="font-size:11.5px; color:#948C7D">Fecha de vencimiento</MudText>
+                        <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                            <Authorized>
+                                <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px;padding-left:12px">
+                                    <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)"
+                                                   DateChanged="ChangeVencimientoAsync"
+                                                   Clearable="true"
+                                                   Underline="false"
+                                                   Variant="Variant.Text"
+                                                   Margin="Margin.Dense" />
+                                </div>
+                            </Authorized>
+                            <NotAuthorized>
+                                <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    }
+
+                    @*Creado en fecha:*@
+                    <MudText Style="font-size:11.5px; color:#948C7D">Fecha de creacion</MudText>
+                    <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@ticket?.FechaCreacion.ToString("dd/MM/yyyy")</MudText>
+                </MudStack>
                 
+
             </MudPaper>
         </MudItem>
     </MudGrid>
@@ -238,6 +288,8 @@ else
     //configuracion
     private ConfiguracionResponseDto? configuracion;
     
+    //Campo calculado
+    private UsuarioDto? AgenteActual => agentes?.FirstOrDefault(a => a.Id == ticket?.AgenteAsignadoId);
 
     protected override async Task OnInitializedAsync()
     {

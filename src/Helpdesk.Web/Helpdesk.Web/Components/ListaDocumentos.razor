@@ -26,11 +26,11 @@ else
                         @ref="fileUpload">
                             <CustomContent>
                     <MudPaper Outlined="true" 
-                        Style="border-style: dashed; cursor: pointer; width:100px; height:100px" 
+                        Style="border-style: dashed; cursor: pointer; width:100px; height:100px; padding: 5px" 
                         @onclick="@(() => context.OpenFilePickerAsync())"
                         Class="d-flex flex-column align-content-center justify-content-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Style="color:#C1571F; font-size:22px" />
-                                    <MudText>Adjuntar Pdf</MudText>
+                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Style="color:#C1571F; font-size:20px" />
+                                    <MudText Style="font-size:15px; color:#948C7D">Adjuntar PDF</MudText>
                                 </MudPaper>
                             </CustomContent>
                     </MudFileUpload>
