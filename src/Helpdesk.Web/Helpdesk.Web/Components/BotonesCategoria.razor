@@ -1,4 +1,4 @@
-﻿<MudGrid>
+﻿<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
     @if (Categorias is null)
     {
         <MudProgressCircular Indeterminate="true" />
@@ -11,20 +11,22 @@
     {
         @foreach (var categoria in Categorias)
         {
-            <MudItem xs="12" sm="6" md="4" Class="pb-2">
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Primary"
-                           FullWidth="true"
-                           OnClick="() => OnSeleccionar.InvokeAsync(categoria)">
-                    <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(categoria.Icono)" Size="Size.Small" />
-                    <MudText Class="mt-1">@categoria.Nombre</MudText>
-                                
-                </MudButton>
-                            
-            </MudItem>
+            <div class="categoria-card" 
+                @onclick="() => OnSeleccionar.InvokeAsync(categoria)"
+                 style="border-radius:14px; padding:18px 16px; 
+                 display:flex; flex-direction:column; gap:8px; cursor:pointer">
+                @*-------------------Icono---------------------------*@
+                <div style="width:38px; height:38px; border-radius:10px; 
+                        background:var(--accent-soft); display:flex; align-items:center; justify-content:center">
+                    <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(categoria.Icono)" Style="font-size:21px; color:var(--mud-palette-primary)"/>
+                </div>
+                @*----------------------------------Nombre de la CAtegoria------------------------------------*@
+                <MudText Style="font-size:14px; font-weight:600; color:#221F1A; line-height:1.25">@categoria.Nombre</MudText>
+
+            </div>
         }
     }
-</MudGrid>
+</div>
 
 @code {
     [Parameter] public CategoriaResponseDto[]? Categorias { get; set; }

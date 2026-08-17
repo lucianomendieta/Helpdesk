@@ -9,7 +9,7 @@
     <TitleContent>
         @if (paso == 1)
         {
-            <MudText> Con que necesitas ayuda?</MudText>
+            <MudText Style="font-size: 20px; font-weight: 700; color: #221F1A"> Con que necesitas ayuda?</MudText>
         }
         else
         {
@@ -17,10 +17,10 @@
         }
     </TitleContent>
     <DialogContent>
-        @* Seleccion de categoria*@
+        @* ----------------------------------------Seleccion de categoria-------------------------------------------------*@
         @if (paso == 1)
         {
-            <MudText Typo="Typo.h6" Class="mb-4">Elige la opcion que mejor describa tu solicitud:</MudText>
+            <MudText Style="font-size: 13.5px; color: #756F63; margin-bottom: 22px">Elige la opcion que mejor describa tu solicitud:</MudText>
             <BotonesCategoria Categorias="categorias" OnSeleccionar="SeleccionarCategoria" />
         }
         else

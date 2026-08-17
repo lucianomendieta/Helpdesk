@@ -354,7 +354,7 @@ else
 
     private async Task CrearTicketAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Medium, FullWidth=true};
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Small, FullWidth=true};
         DialogParameters<CrearTicketDialog> parameters = new()
         {
             { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }

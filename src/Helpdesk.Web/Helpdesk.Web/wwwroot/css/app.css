@@ -208,3 +208,14 @@ code {
     border-color: var(--mud-palette-primary);
 }
 
+
+/*Estilos de las cards de categorias*/
+.categoria-card {
+    border: 1.5px solid rgba(33,29,24,.1);
+    border-radius: 14px;
+    transition: border-color .2s;
+    min-height: 100px;
+}
+.categoria-card:hover {
+    border-color: var(--mud-palette-primary);
+}
