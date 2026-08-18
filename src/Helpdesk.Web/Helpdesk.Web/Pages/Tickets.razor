@@ -339,13 +339,13 @@ else @*VISTA DE CARDS/TARJETAS*@
 
     private async Task OpenDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Medium, FullWidth=true };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth=MaxWidth.Small, FullWidth=true };
         DialogParameters<CrearTicketDialog> parameters = new()
         {
             { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
         };
         
-        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", parameters, options);
+        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("", parameters, options);
 
         var result = await dialog.Result;
         if (result?.Data is TicketDto nuevo)

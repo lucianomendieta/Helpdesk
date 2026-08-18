@@ -359,7 +359,7 @@ else
         {
             { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
         };
-        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("Nuevo Ticket", parameters, options);
+        var dialog = await dialogService.ShowAsync<CrearTicketDialog>("", parameters, options);
 
         var result = await dialog.Result;
 

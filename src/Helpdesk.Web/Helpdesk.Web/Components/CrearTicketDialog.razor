@@ -6,94 +6,137 @@
 
 
 <MudDialog Class="pa-4">
-    <TitleContent>
-        @if (paso == 1)
-        {
-            <MudText Style="font-size: 20px; font-weight: 700; color: #221F1A"> Con que necesitas ayuda?</MudText>
-        }
-        else
-        {
-            <MudText>Nuevo ticket</MudText>
-        }
-    </TitleContent>
     <DialogContent>
+        
         @* ----------------------------------------Seleccion de categoria-------------------------------------------------*@
         @if (paso == 1)
         {
-            <MudText Style="font-size: 13.5px; color: #756F63; margin-bottom: 22px">Elige la opcion que mejor describa tu solicitud:</MudText>
-            <BotonesCategoria Categorias="categorias" OnSeleccionar="SeleccionarCategoria" />
+            <MudText Style="font-size: 20px; font-weight: 700; color: #221F1A"> Con que necesitas ayuda?</MudText>
+            <BotonesCategoria Categorias="categorias" OnSeleccionar="SeleccionarCategoria"/>
         }
         else
         {
+            @*-----------------------------------------Titulos---------------------------------------------------*@
+            @if (esCliente)
+            {
+                <div @onclick="VolverAPaso1" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px">
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Style="font-size: 17px; color: var(--mud-palette-primary)" />
+                    <MudText Style="font-size: 13px; font-weight: 600; color: var(--mud-palette-primary)">Volver</MudText>
+                </div>
+            }
+            <MudText Style="font-size: 20px; font-weight: 700; color: #221F1A;">@(esCliente ? "Contanos Mas" : "Nuevo Ticket")</MudText>
+
+            @if (esCliente && categoriaSeleccionada is not null)
+            {
+                <div style="gap:7px; background:var(--accent-soft); color:var(--mud-palette-primary); display: inline-flex;
+                    padding:6px 12px; border-radius:20px; font-size: 12.5px; font-weight: 600; margin:12px 0 20px">
+                    <MudIcon Icon="@(CategoriaIconHelper.ObtenerCategoria2Icon(categoriaSeleccionada.Icono))" Style="font-size: 16px"/>
+                    <MudText Style="font-size: 12.5px; font-weight: 300;">@categoriaSeleccionada.Nombre</MudText>
+                </div>
+            }
+
             <MudForm @ref="form" @bind-IsValid="IsValid">
-                <MudText>Titulo:</MudText>
-                <MudTextField T="string" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo"/>
-                <MudText>Descripcion:</MudText>
-                <MudTextField T="string" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"/>
+                @*------Titulo------*@
+                <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px; margin-top: 6px">Título</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px; margin-bottom:16px">
+                    <MudTextField T="string" @bind-Value="dto.Titulo" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                                  Required="true" RequiredError="Ingrese un titulo"
+                                  Style="font-size:13.5px; color:#221F1A"/>
+                </div>
+                @*---------Descipcion------------*@
+                <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Descripción</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:12px 14px; margin-bottom:16px">
+                    <MudTextField T="string" @bind-Value="dto.Descripcion" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                                  Lines="3" Required="true" RequiredError="Ingrese la descripcion del ticket"
+                                  Style="font-size:13.5px; color:#221F1A" />
+                </div>
                 <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                    
+
                     @* Selects de categorias y fechas para el staff*@
-                    <MudStack Row="true">
-                        <MudSelect T="int" Label="Categoria" @bind-Value="dto.CategoriaId">
-                            @if (categorias is not null)
-                            {
-                                @foreach (var c in categorias)
-                                {
-                                    <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
-                                }
-                            }
-                        </MudSelect>
-                        @*Solo si esta activado mostramos*@
+                    <div style="display:flex; gap:12px; margin-bottom:16px">
+                        @*--------------------Categorias------------------*@
+                        <div style="flex:1; min-width: 0">
+                            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Categoría</MudText>
+                            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px">
+                                <MudSelect T="int" @bind-Value="dto.CategoriaId" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                                           Style="font-size:13.5px; color:#221F1A">
+                                    @if (categorias is not null)
+                                    {
+                                        @foreach (var c in categorias)
+                                        {
+                                            <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </div>
+                        </div>
+                        @*------------------Prioridad-----------------------*@
+                        <div style="flex:1; min-width: 0">
+                            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Prioridad</MudText>
+                            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px">
+                                <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                                           Style="font-size:13.5px; color:#221F1A">
+                                    @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                                    {
+                                        <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </div>
+                        </div>
+                        @*---------------Fecha vencimiento----------------------*@
                         @if (usarFechaVencimiento)
                         {
-                            <MudDatePicker @bind-Date="fechaSeleccionada" Label="Fecha de Vencimiento" Clearable="true"/> 
+                            <div style="flex:1; min-width: 0">
+                                <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Vencimiento</MudText>
+                                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px">
+                                    <MudDatePicker @bind-Date="fechaSeleccionada" Variant="Variant.Text" Underline="false" Margin="Margin.Dense" Clearable="true"
+                                                   Style="font-size:13.5px; color:#221F1A"/>
+                                </div>
+                            </div>
                         }
-                        
-                    </MudStack>
-                    @* Select de prioridades del ticket*@
-                    <MudSelect T="PrioridadTicket" @bind-Value="dto.Prioridad">
-                        @foreach (var p in Enum.GetValues<PrioridadTicket>())
-                        {
-                            <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
-                        }
-                    </MudSelect>
+                    </div>
 
                 </AuthorizeView>
-                <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5 * 1024 * 1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
-                    <CustomContent>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.AttachFile"
-                                   OnClick="@(() => context.OpenFilePickerAsync())">
-                            Adjuntar archivos
-                        </MudButton>
-                    </CustomContent>
-                    <SelectedTemplate>
-                        @if (context is not null)
-                        {
-                            <MudStack Row="true" Wrap="Wrap.Wrap" Style="row-gap:4">
-                                @foreach (var archivo in context)
-                                {
-                                    <MudChip T="string" OnClose="@(async () => await fileUpload.RemoveFileAsync(archivo))">@archivo.Name</MudChip>
-                                }
-                            </MudStack>
-                        }
-                    </SelectedTemplate>
-                </MudFileUpload>
+                    <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Adjuntos</MudText>
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="archivos" Accept=".jpg,.jpeg,.png,.webp" MaxFileSize="@(5 * 1024 * 1024)" MaximumFileCount="7" AppendMultipleFiles="false" @ref="fileUpload">
+                        <CustomContent>
+                            <div @onclick="@(() => context.OpenFilePickerAsync())"
+                                 style="border:1.5px dashed rgba(33,29,24,.2); border-radius:11px; padding:16px; display:flex; align-items:center; gap:8px; color:#948C7D; cursor:pointer">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Style="font-size:20px; color:#948C7D" />
+                                <MudText Style="font-size:12.5px; color:#948C7D">Hace click para subir archivos.</MudText>
+                            </div>
+                        </CustomContent>
+                        <SelectedTemplate>
+                            @if (context is not null)
+                            {
+                                <MudStack Row="true" Wrap="Wrap.Wrap" Style="row-gap:4">
+                                    @foreach (var archivo in context)
+                                    {
+                                        <MudChip T="string" OnClose="@(async () => await fileUpload.RemoveFileAsync(archivo))"
+                                                 Style="background:#F8F5EE; color:#221F1A; border-radius:20px; font-size:12.5px; font-weight:500;">
+                                            @archivo.Name
+                                        </MudChip>
+                                    }
+                                </MudStack>
+                            }
+                        </SelectedTemplate>
+                    </MudFileUpload>
             </MudForm>
         }
-        
+
     </DialogContent>
         
     <DialogActions>
-        @if (paso == 2 && esCliente )
-        {
-            <MudButton OnClick="VolverAPaso1" Disabled="enviando">← volver</MudButton>
-        }
-        <MudButton OnClick="Cancel" Disabled="enviando">Cancelar</MudButton>
+        <MudButton OnClick="Cancel" Disabled="enviando"
+                   Style="font-size:13.5px; font-weight:600; color:#756F63; text-transform:none">
+            Cancelar
+        </MudButton>
         @if (paso == 2)
         {
-            <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando">Crear</MudButton>
+            <MudButton OnClick="Submit" Color="Color.Primary" Disabled="enviando"
+                       Style="border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:700; text-transform:none">
+                Crear ticket
+            </MudButton>
         }
     </DialogActions>
 </MudDialog>
@@ -109,6 +152,9 @@
     private IReadOnlyList<IBrowserFile>? archivos;
     //Dto para ticket
     private CrearTicketDto dto = new();
+    
+    //Categoria
+    private CategoriaResponseDto? categoriaSeleccionada;
     
     //Estados
     private bool enviando;
@@ -164,6 +210,7 @@
     private void SeleccionarCategoria(CategoriaResponseDto categoria)
     {
         dto.CategoriaId = categoria.Id; //Guardo la categoria seleccionada
+        categoriaSeleccionada = categoria;
         dto.Prioridad = categoria.PrioridadSugerida;
         MostrarPaso2();
     }
