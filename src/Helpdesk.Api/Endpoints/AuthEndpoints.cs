@@ -92,12 +92,14 @@ public static class AuthEndpoints
 
             //Armo las credenciales y el tokenDescriptor con los datos del config
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            //Leo la expiracion del config, si no esta o es invalida uso 60 minutos por defecto
+            var expiryMinutes = int.TryParse(config["Jwt:ExpiryMinutes"], out var minutos) ? minutos : 30;
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Issuer = config["Jwt:Issuer"],
                 Audience = config["Jwt:Audience"],
                 Subject = new ClaimsIdentity(claimList),
-                Expires = DateTime.UtcNow.AddMinutes(30),
+                Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 SigningCredentials = credentials
             };
 

@@ -1,4 +1,5 @@
 ﻿@page "/reportes"
+@using System.Globalization
 @using System.Runtime.InteropServices.JavaScript
 @using Microsoft.AspNetCore.Authorization
 @using _Imports = MudBlazor._Imports
@@ -24,26 +25,65 @@ else
 {
     <MudContainer>
         @*============================CABECERA=========================================*@
-        <MudStack Row="true">
+        <MudStack Row="true" AlignItems="AlignItems.Start">
             <MudStack>
-                <MudText Typo="Typo.overline">Reportes</MudText>
-                <MudText Typo="Typo.h5">@configuracion?.NombreEmpresa - Vista solo lectura</MudText>
+                <MudText Style="font-size:26px;font-weight:700;color:#221F1A">Reportes</MudText>
+                <MudText Style="font-size: 13.5px; color: #756F63; margin-top: 2px">@configuracion?.NombreEmpresa - Vista solo lectura</MudText>
             </MudStack>
-            @*DESDE*@
-            <MudDatePicker Date="desdeSelected" DateChanged="OnDesdeChanged"/>
-            @*HASTA*@
-            <MudDatePicker Date="hastaSelected" DateChanged="OnHastaChanged"/>
-            @*EXPORTAR*@
             <MudSpacer/>
-            <MudButton StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                       OnClick="ExportarPdfAsync"
-                       Disabled="exportando">Exportar</MudButton>
+            
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                @*DESDE*@
+                <div class="reporte-fecha-picker" style="border:1.5px solid rgba(33,29,24,.12); border-radius:10px; 
+                                padding:9px 13px; background:#fff; display: flex; align-items: center; gap: 8px;">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Style="font-size: 16px; color: #948C7D"/>
+                    <span style="font-size: 12px; color:#948C7D">Desde</span>
+                    <MudDatePicker Date="desdeSelected"
+                                   DateChanged="OnDesdeChanged"
+                                   Variant="Variant.Text"
+                                   Underline="false"
+                                   Margin="Margin.Dense"
+                                   DateFormat="dd/MM/yyyy"
+                                   Adornment="Adornment.None"
+                                   Class="pa-0"/>
+                </div>
+                
+                
+                @*HASTA*@
+                <div class="reporte-fecha-picker" style="border:1.5px solid rgba(33,29,24,.12); border-radius:10px; 
+                                padding:9px 13px; background:#fff; display: flex; align-items: center; gap: 8px;">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Style="font-size: 16px; color: #948C7D"/>
+                    <span style="font-size: 12px; color:#948C7D">Hasta</span>
+                    <MudDatePicker Date="hastaSelected" 
+                                   DateChanged="OnHastaChanged"
+                                   Variant="Variant.Text"
+                                   Underline="false"
+                                   Margin="Margin.Dense"
+                                   DateFormat="dd/MM/yyyy"
+                                   Adornment="Adornment.None"
+                                   Class="pa-0"/>
+                </div>
+                
+                
+                @*EXPORTAR*@
+                <MudButton StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           OnClick="ExportarPdfAsync"
+                           Disabled="exportando"
+                           Style="border:1.5px solid rgba(33,29,24,.14); border-radius:10px; padding:10px 15px; 
+                           font-size: 13px; font-weight: 600; color:#221F1A; text-transform: none">
+                    Exportar a PDF
+                </MudButton>
+            </MudStack>
+            
+            
         </MudStack>
         
         @*==================PROMEDIO DEL PERIODO=========================   *@
-        <MudPaper Class="ma-4"> 
-            <MudStack Row="true">
-                <MudIcon Icon="@Icons.Material.Filled.Timer"/>
+        <MudPaper Style="background-color: #fff; border: 1px solid var(--borde-sutil); border-radius: 16px; 
+        padding: 22px 26px; margin-bottom: 18px; margin-top: 18px; display: flex; align-items: center; gap: 22px;"> 
+                <div style="border-radius: 13px; background: var(--accent-soft); width:52px; height:52px; display:flex; align-items:center; justify-content:center">
+                    <MudIcon Icon="@Icons.Material.Filled.Timer" Style="font-size: 28px; color: var(--mud-palette-primary)"/>
+                </div>
                 @*CONTADOR DE PROMEDIO*@
                 <MudStack>
                     @if (reporte.TiempoResolucion.PromedioDias == null)
@@ -52,33 +92,38 @@ else
                     }
                     else
                     {
-                        <MudStack Row="true">
-                            <MudText Typo="Typo.h6">@reporte.TiempoResolucion.PromedioDias</MudText>
-                            <MudText Typo="Typo.body1"> dias promedio de resolucion</MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Baseline">
+                            <MudText Style="font-size:34px; font-weight:700; color:#221F1A">@reporte.TiempoResolucion.PromedioDias</MudText>
+                            <MudText Style="font-size:15px; font-weight:600; color:#756F63"> dias promedio de resolucion</MudText>
                         </MudStack>
                     
-                        <MudText>Promedio sobre @reporte.TiempoResolucion.CantidadResueltos en el periodo</MudText>    
+                        <MudText Style="font-size:12.5px; color:#948C7D">Promedio sobre @reporte.TiempoResolucion.CantidadResueltos en el periodo</MudText>    
                     }
                     
                 </MudStack>
-            </MudStack>
         </MudPaper>
         
         @*============================POR CATEGORIAS======================*@
-        <MudPaper Class="ma-4">
-            <MudText Typo="Typo.h6" Style="font-weight: bold">Volumen por categoria</MudText>
-            <MudText Typo="Typo.body1"> Tickets creados en el periodo </MudText>
+        <MudPaper Style="background-color:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px 26px; margin-bottom:18px">
+            <MudText Typo="Typo.h6" Style="font-size:15px; font-weight:700; color:#221F1A; margin-bottom:2px">Volumen por categoria</MudText>
+            <MudText Style="font-size:12px; color:#948C7D; margin-bottom:18px"> Tickets creados en el periodo </MudText>
             
-            @foreach (var categoria in reporte.PorCategoria)
-            {
-                <MudStack Row="true">
-                    <MudText Typo="Typo.body1">@categoria.Categoria</MudText>
-                    <MudProgressLinear 
-                        Max="reporte.PorCategoria.Max(c => c.Cantidad)" 
-                        Value="categoria.Cantidad"/> 
-                    <MudText Typo="Typo.body1" Style="font-weight: bold">@categoria.Cantidad</MudText>
-                </MudStack>
-            }
+            <div style="display: flex; flex-direction: column; gap: 13px">
+                @foreach (var categoria in reporte.PorCategoria)
+                {
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <MudText Style="width:190px; flex:none; font-size:12.5px; font-weight:500; color:#221F1A; line-height:1.25">@categoria.Categoria</MudText>
+                        <div style="flex:1; background:#F1ECE1; border-radius:7px; height:20px; position:relative">
+                            <div style="@($"height:100%; border-radius:7px; background:var(--mud-palette-primary); " +
+                                        $"width:{pctCategoria(categoria.Cantidad).ToString(CultureInfo.InvariantCulture)}%")" />
+                        </div>
+                        <div style="width:26px; flex:none; font-size:13px; font-weight:700; color:#221F1A; text-align:right">
+                            @categoria.Cantidad
+                        </div>
+                    </div>
+                }
+            </div>
+            
         </MudPaper>
         
         @*=============================POR MESES==========================*@
@@ -185,5 +230,13 @@ else
             exportando = false;
         }
         
+    }
+    
+    //Helper de  linea
+    private double pctCategoria(int Cantidad)
+    {
+        var max = reporte.PorCategoria.Max(c => c.Cantidad); //Saco el maximo de categorias
+        double cantidadInt = Cantidad; //Convierto a double el entero de cantidad
+        return (cantidadInt / max) * 100;  //Devuelvo el porcentaje
     }
 }

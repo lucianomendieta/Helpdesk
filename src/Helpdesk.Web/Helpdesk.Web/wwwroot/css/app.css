@@ -219,3 +219,8 @@ code {
 .categoria-card:hover {
     border-color: var(--mud-palette-primary);
 }
+
+/*Estilos de date pickers*/
+.reporte-fecha-picker .mud-picker-inline {
+    flex: none;
+}
