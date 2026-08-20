@@ -127,17 +127,23 @@ else
         </MudPaper>
         
         @*=============================POR MESES==========================*@
-        <MudPaper Class="ma-4">
-            <MudText Typo="Typo.h6" Style="font-weight: bold">Volumen por mes</MudText>
-            <MudText Typo="Typo.body1"> Tickets creados por mes </MudText>
+        <MudPaper Style="background-color:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px 26px; margin-bottom:18px">
+            <MudText Typo="Typo.h6" Style="font-size:15px; font-weight:700; color:#221F1A; margin-bottom:2px">Volumen por mes</MudText>
+            <MudText Style="font-size:12px; color:#948C7D; margin-bottom:18px"> Tickets creados por mes </MudText>
             
-            <MudChart T="double" 
-                      ChartType="ChartType.Bar" 
-                      ChartSeries="mesesSeries"
-                      ChartLabels="labelsPorMes"
-                      Width="100%"
-                      Height="300px"
-                      />
+            <div style="display: flex; align-items: flex-end; gap: 18px; height: 150px; padding: 0 4px">
+                @foreach (var mes in reporte.PorMes)
+                {
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end">
+                        <MudText Style="font-size: 12px; font-weight: 700; color: #221F1A">@mes.Cantidad</MudText>
+                        <div style="@($"width: 100%; max-width: 44px; border-radius: 6px 6px 0 0; " +
+                                    $"background: var(--mud-palette-primary); height: {pctMes(mes.Cantidad).ToString(CultureInfo.InvariantCulture)}%" )"/>
+                        <MudText Style="font-size: 11px; color: #948C7D">@($"{mes.Mes:D2}/{mes.Anio}")</MudText>
+                    </div>
+
+                }
+            </div>
+             
         </MudPaper>
         
     </MudContainer>
@@ -154,11 +160,6 @@ else
     private DateTime? desdeSelected;
     private DateTime? hastaSelected;
     
-    //Datos para el chart de meses
-    private double[] cantidadesPorMes = [];
-    private string[] labelsPorMes = [];
-    private List<ChartSeries<double>> mesesSeries = [];
-
     
     //Inicializo los datos a usar
     protected override async Task OnInitializedAsync()
@@ -177,20 +178,7 @@ else
         if (reporte is null)
         {
             snackbar.Add("No se pudo cargar el reporte, contacte a soporte.", Severity.Error);
-            cantidadesPorMes = [];
-            labelsPorMes = [];
-            mesesSeries = [];
             return;
-        }
-        else
-        {
-            //Precargo el reporte de meses
-            cantidadesPorMes = reporte.PorMes.Select(m => (double)m.Cantidad).ToArray();
-            labelsPorMes = reporte.PorMes.Select(m => $"{m.Mes:D2}/{m.Anio}").ToArray();
-            mesesSeries = new List<ChartSeries<double>>
-            {
-                new ChartSeries<double> { Name = "Tickets", Data = cantidadesPorMes }
-            };
         }
         
     }
@@ -232,11 +220,19 @@ else
         
     }
     
-    //Helper de  linea
+    //Helper de bar por categoria
     private double pctCategoria(int Cantidad)
     {
         var max = reporte.PorCategoria.Max(c => c.Cantidad); //Saco el maximo de categorias
-        double cantidadInt = Cantidad; //Convierto a double el entero de cantidad
-        return (cantidadInt / max) * 100;  //Devuelvo el porcentaje
+        double cantidaddb = Cantidad; //Convierto a double el entero de cantidad
+        return (cantidaddb / max) * 100;  //Devuelvo el porcentaje
+    }
+    
+    //Helper de bar por mes
+    private double pctMes(int Cantidad)
+    {
+        var max = reporte.PorMes.Max(m => m.Cantidad); //Saco el maximo del mes
+        double cantidaddb = Cantidad; //Convierto a double el entero de cantidad
+        return (cantidaddb / max) * 100;  //Devuelvo el porcentaje
     }
 }
