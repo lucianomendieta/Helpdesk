@@ -1,5 +1,6 @@
-﻿@using Helpdesk.Web.Components;
+@using Helpdesk.Web.Components;
 @using Helpdesk.Web.Dtos;
+@using Helpdesk.Web.Helpers;
 @using Helpdesk.Web.Services;
 @using Microsoft.AspNetCore.Authorization
 
@@ -10,53 +11,96 @@
 @page "/usuarios"
 @attribute [Authorize(Roles = "Administrador,Gerente")]
 
-<MudTable T="UsuarioDto" Items="users ?? []" Hover="true" Bordered="true" Loading="users is null" >
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Usuarios</MudText>
+<MudContainer>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Style="margin-bottom:24px">
+        <MudText Style="font-size:25px; font-weight:700; color:#221F1A">Usuarios</MudText>
         <MudSpacer />
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="OpenDialogAsync">
-            Usuario
+                   OnClick="OpenDialogAsync"
+                   Style="border-radius:11px; padding:11px 22px; font-size:13px; font-weight:700; text-transform:none">
+            Crear Usuario
         </MudButton>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.Id)">Id</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.Nombre)">Usuario</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.Email)">Email</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.NombrePila)">NombrePila</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.ApellidoPila)">ApellidoPila</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.Rol)">Rol</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortBy="new Func<UsuarioDto, object>(u => u.Estado)">Estado</MudTableSortLabel></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Id">@context.Id</MudTd>
-        <MudTd DataLabel="Usuario">@context.Nombre</MudTd>
-        <MudTd DataLabel="Email">@context.Email</MudTd>
-        <MudTd DataLabel="Nombre Pila">@context.NombrePila</MudTd>
-        <MudTd DataLabel="Apellido Pila">@context.ApellidoPila</MudTd>
-        <MudTd DataLabel="Rol">@context.Rol</MudTd>
-        <MudTd DataLabel="Estado">@context.Estado</MudTd>
-        <MudTd @onclick:stopPropagation="true">
-            <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
-                           Color="Color.Secondary"
-                           OnClick="@(() => ShowCambiarRolDialogAsync(context))" />
-            <MudIconButton Icon="@Icons.Material.Filled.Key"
-                           Color="Color.Warning"
-                           OnClick="@(() => ShowResetPasswordDialogAsync(context))" />
-            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                           Color="Color.Secondary"
-                           OnClick="@(() => ShowUpdateDialogAsync(context))"/>
-            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager PageSizeOptions="new int[] {5, 10, 25}"/>
-    </PagerContent>
-</MudTable>
+    </MudStack>
+
+    <div style="background:#fff; border:2px solid var(--borde-sutil); border-radius:16px; overflow:hidden">
+        <MudTable T="UsuarioDto"
+                  Items="users ?? []"
+                  Hover="true"
+                  Dense="true"
+                  Loading="users is null">
+            <HeaderContent>
+                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:10px 14px">Usuario</MudTh>
+                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:10px 14px">Email</MudTh>
+                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:10px 14px">Rol</MudTh>
+                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:10px 14px">Estado</MudTh>
+                <MudTh Style="font-size:10.5px; color:#948C7D; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:10px 14px">Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                @* Avatar + nombre completo + username *@
+                <MudTd>
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <MudAvatar Size="Size.Small"
+                                   Style="background:var(--accent-soft); color:var(--mud-palette-primary); font-size:12px; font-weight:700">
+                            @InicialHelper.InicialesHelper($"{context.NombrePila} {context.ApellidoPila}".Trim())
+                        </MudAvatar>
+                        <div>
+                            <div style="font-size:13px; font-weight:600; color:#221F1A">@context.NombrePila @context.ApellidoPila</div>
+                            <div style="font-size:11.5px; color:#948C7D">@context.Nombre</div>
+                        </div>
+                    </div>
+                </MudTd>
+
+                <MudTd>
+                    <span style="font-size:13px; color:#756F63">@context.Email</span>
+                </MudTd>
+
+                @* Rol: chip neutro gris *@
+                <MudTd>
+                    <span style="font-size:11.5px; font-weight:600; color:#756F63; background:#EDE9DF; padding:4px 10px; border-radius:20px">
+                        @context.Rol
+                    </span>
+                </MudTd>
+
+                @* Estado: verde activo / gris inactivo *@
+                <MudTd>
+                    @if (context.Estado == EstadoUsuario.Activo)
+                    {
+                        <span style="font-size:11.5px; font-weight:600; color:var(--estado-hecho-txt); background:var(--estado-hecho-bg); padding:4px 10px; border-radius:20px">Activo</span>
+                    }
+                    else
+                    {
+                        <span style="font-size:11.5px; font-weight:600; color:var(--estado-cerrado-txt); background:var(--estado-cerrado-bg); padding:4px 10px; border-radius:20px">Inactivo</span>
+                    }
+                </MudTd>
+
+                @* Acciones: sin Color.Secondary ni Color.Warning *@
+                <MudTd @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
+                                   Style="color:#756F63"
+                                   OnClick="@(() => ShowCambiarRolDialogAsync(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Key"
+                                   Style="color:#756F63"
+                                   OnClick="@(() => ShowResetPasswordDialogAsync(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Style="color:var(--mud-palette-primary)"
+                                   OnClick="@(() => ShowUpdateDialogAsync(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Style="color:var(--alerta-txt)"
+                                   OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] {5, 10, 25}"
+                               RowsPerPageString="Filas por página:"
+                               InfoFormat="{first_item}-{last_item} de {all_items}" />
+            </PagerContent>
+        </MudTable>
+    </div>
+
+</MudContainer>
 
 
 @code {
@@ -90,19 +134,17 @@
         var result = await dialog.Result;
         if (result?.Data is UsuarioDto edit)
         {
-            //Ejecuto el update inline para actualizar la vista
             users = users?.Select(u => u.Id == edit.Id ? edit : u).ToArray();
         }
-
     }
 
     private async Task ShowDeleteDialogAsync(int id)
     {
         bool? result = await dialogService.ShowMessageBoxAsync(
-        title: "Atencion!",
-        message: "Esta seguro que quiere borrar el usuario?",
-        yesText: "Borrar",
-        cancelText: "Cancel"
+            title: "Atención",
+            message: "¿Seguro que querés borrar el usuario?",
+            yesText: "Borrar",
+            cancelText: "Cancelar"
         );
 
         if (result == true)
@@ -116,7 +158,6 @@
             {
                 snackbar.Add("No se pudo eliminar el usuario", Severity.Error);
             }
-
         }
     }
 
@@ -129,12 +170,10 @@
         var result = await dialog.Result;
         if (result?.Data is true)
         {
-            snackbar.Add("Se ha reiniciado la contraseña con exito!", Severity.Success);
+            snackbar.Add("Se ha reiniciado la contraseña con éxito", Severity.Success);
         }
     }
 
-
-    //Muestro el dialog de cambiar rol
     private async Task ShowCambiarRolDialogAsync(UsuarioDto usuarioAEditar)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };

@@ -1,85 +1,108 @@
-﻿@using Helpdesk.Web.Dtos;
+@using Helpdesk.Web.Dtos;
+@using Helpdesk.Web.Helpers;
 @using Helpdesk.Web.Models;
-
 
 @inject IUsuarioService usuarioService;
 @inject ISnackbar snackbar;
 
 @page "/mi-perfil"
 
-@if (cargando) 
-{ 
-    <MudSkeleton/> 
-} 
-else if (perfil is null) 
-{
-    <MudAlert Severity="Severity.Error">
-        No se pudo obtener tu usuario, contacte a soporte
-    </MudAlert>
-} 
-else 
+@if (cargando)
 {
     <MudContainer>
-        <MudCard>
-            <MudCardHeader>
-                @*Banner y avatar con chip de rol*@
-                <MudStack Row="true">
-                    <MudChip T="RolUsuario" Color="Color.Default">@perfil.Rol</MudChip>
-                    <MudAvatar>@InicialHelper.InicialesHelper($"{perfil.NombrePila} {perfil.ApellidoPila}")</MudAvatar>
-                </MudStack>
-            </MudCardHeader>
-
-            <MudCardContent>
-                @*Nombres y estado*@
-                <MudStack>
-                    <MudText Typo="Typo.h5">@(perfil.NombrePila + " " + perfil.ApellidoPila)</MudText>
-                    <MudChip T="EstadoUsuario" Color="@perfil.Estado.GetColor()">@perfil.Estado</MudChip>
-                </MudStack>
-
-                @*Nombre de pila y apellido, Id de usuario y su rol*@
-                <MudText Typo="Typo.overline" Color="Color.Secondary">Identidad</MudText>
-                <MudGrid>
-                    @Dato("Nombre de Pila", perfil.NombrePila!)
-                    @Dato("Apellido", perfil.ApellidoPila!)
-                    @Dato("Id de Usuario", perfil.Id.ToString())
-                    @Dato("Rol", perfil.Rol.ToString())
-                </MudGrid>
-
-                @*Email del usuario*@
-                <MudText Typo="Typo.overline" Color="Color.Secondary">Cuenta</MudText>
-                <MudGrid>
-                    @Dato("Email", perfil.Email!)
-                </MudGrid>
-            </MudCardContent>
-            
-        </MudCard>
+        <MudSkeleton Height="400px" />
     </MudContainer>
 }
+else if (perfil is null)
+{
+    <MudContainer>
+        <MudAlert Severity="Severity.Error">No se pudo obtener tu usuario, contactate con soporte.</MudAlert>
+    </MudContainer>
+}
+else
+{
+    <MudContainer>
 
+        <MudText Style="font-size:25px; font-weight:700; color:#221F1A; margin-bottom:6px">Mi Perfil</MudText>
+        <MudText Style="font-size:13.5px; color:#756F63; margin-bottom:24px">Información de tu cuenta. Solo lectura.</MudText>
 
+        <div style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; overflow:hidden; max-width:680px">
 
+            @* Banner con gradiente *@
+            <div style="height:96px; background:linear-gradient(120deg,#221F1A,var(--mud-palette-primary)); position:relative">
+                @* Chip de rol *@
+                <span style="position:absolute; top:16px; left:20px; background:rgba(255,255,255,.9); color:#221F1A; font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px">
+                    @perfil.Rol
+                </span>
+                @* Avatar con iniciales *@
+                <div style="position:absolute; left:24px; bottom:-30px; width:74px; height:74px; border-radius:50%; background:var(--mud-palette-primary); border:4px solid #fff; color:#fff; font-size:24px; font-weight:700; display:flex; align-items:center; justify-content:center">
+                    @InicialHelper.InicialesHelper($"{perfil.NombrePila} {perfil.ApellidoPila}".Trim())
+                </div>
+            </div>
+
+            @* Contenido — padding-top 44px para despejar el avatar que sobresale *@
+            <div style="padding:44px 32px 30px">
+
+                @* Nombre + indicador de estado *@
+                <div style="font-size:20px; font-weight:700; color:#221F1A">@perfil.NombrePila @perfil.ApellidoPila</div>
+                <div style="display:flex; align-items:center; gap:6px; margin-top:4px; margin-bottom:26px">
+                    @if (perfil.Estado == EstadoUsuario.Activo)
+                    {
+                        <span style="width:7px; height:7px; border-radius:50%; background:#1E8E5A; display:inline-block"></span>
+                        <span style="font-size:13px; font-weight:600; color:#1E8E5A">Activo</span>
+                    }
+                    else
+                    {
+                        <span style="width:7px; height:7px; border-radius:50%; background:#6B6459; display:inline-block"></span>
+                        <span style="font-size:13px; font-weight:600; color:#6B6459">Inactivo</span>
+                    }
+                </div>
+
+                @* Sección IDENTIDAD *@
+                <div style="font-size:11.5px; font-weight:700; letter-spacing:.06em; color:#948C7D; margin-bottom:14px">IDENTIDAD</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px">
+                    @Campo("Nombre de pila", perfil.NombrePila ?? "—")
+                    @Campo("Apellido", perfil.ApellidoPila ?? "—")
+                    @Campo("ID de usuario", perfil.Id.ToString())
+                    @Campo("Rol", perfil.Rol.ToString())
+                </div>
+
+                @* Sección CUENTA Y SEGURIDAD *@
+                <div style="font-size:11.5px; font-weight:700; letter-spacing:.06em; color:#948C7D; margin-bottom:14px">CUENTA Y SEGURIDAD</div>
+                <div style="display:flex; flex-direction:column; gap:10px">
+                    @FilaCuenta("Usuario", perfil.Nombre ?? "—")
+                    @FilaCuenta("Email", perfil.Email ?? "—")
+                </div>
+
+            </div>
+        </div>
+
+    </MudContainer>
+}
 
 @code {
     private UsuarioDto? perfil;
     private bool cargando = true;
-
 
     protected override async Task OnInitializedAsync()
     {
         perfil = await usuarioService.GetMiPerfilAsync();
         if (perfil is null)
         {
-            snackbar.Add("No se pudo obtener tu usuario, contacte a soporte.", Severity.Error);
+            snackbar.Add("No se pudo obtener tu usuario, contactate con soporte.", Severity.Error);
         }
         cargando = false;
     }
 
-    //Metodo renderfragment para no repetir estructura
-    private RenderFragment Dato(string label, string valor) =>
-        @<MudItem xs="12" sm="6">
-            <MudStack Spacing="0">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">@label</MudText>
-                <MudText Typo="Typo.body1">@valor</MudText>
-            </MudStack>
-        </MudItem>;
+    private RenderFragment Campo(string label, string valor) =>
+        @<div>
+            <div style="font-size:12px; color:#948C7D; margin-bottom:5px">@label</div>
+            <div style="font-size:14.5px; font-weight:600; color:#221F1A">@valor</div>
+        </div>;
+
+    private RenderFragment FilaCuenta(string label, string valor) =>
+        @<div style="display:flex; align-items:center; justify-content:space-between; background:#F8F5EE; border-radius:10px; padding:13px 16px">
+            <span style="font-size:13px; color:#756F63">@label</span>
+            <span style="font-size:13.5px; font-weight:600; color:#221F1A">@valor</span>
+        </div>;
 }
