@@ -3,43 +3,83 @@
 
 <MudDialog>
     <TitleContent>
-        Nueva categoria
+        <MudText Style="font-size: 18px; font-weight: 700; color: #221F1A;">Crear Categoria</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="IsValid">
-            <MudStack Row="true">
-                @*select de iconos, pasada visual pendiente*@
-                <MudSelect T="string" @bind-Value="dto.Icono" Required="true" Style="max-width: 90px;">
-                    @foreach (var clave in CategoriaIconHelper.ClavesDisponibles())
-                    {
-                        <MudSelectItem T="string" Value="@clave">
-                            <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(clave)" />
-                        </MudSelectItem>
-                    }
-                </MudSelect>
-                <MudTextField T="string" Label="Nombre de categoria" @bind-Value="dto.Nombre" Required="true" RequiredError="Ingrese el nombre de la categoria" />
-            </MudStack>
-            <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" />
-            @*Stackeo el select de categoria y el contador de dias hasta vencimiento*@
-            <MudStack Row="true">
-                <MudSelect T="PrioridadTicket?" Label="Prioridad Sugerida" @bind-Value="dto.PrioridadSugerida">
-                    @foreach (var prioridad in Enum.GetValues<PrioridadTicket>())
-                    {
-                        <MudSelectItem T="PrioridadTicket?" Value="prioridad"> @prioridad</MudSelectItem>
-                    }
-                </MudSelect>
-                
-                @if (usarFechaVencimiento)
-                {
-                    <MudNumericField T="int?" @bind-Value="dto.DiasVencimiento" Min="1" HelperText="Vacio = sin vencimiento" />
-                }
-            </MudStack>
             
+            @*------Titulo------*@
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px; margin-top: 6px">Nombre</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px; margin-bottom:16px">
+                <MudTextField T="string" @bind-Value="dto.Nombre" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                              Required="true" RequiredError="Ingrese un titulo"
+                              Style="font-size:13.5px; color:#221F1A"/>
+            </div>
+            @*---------Descipcion------------*@
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Descripción</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:12px 14px; margin-bottom:16px">
+                <MudTextField T="string" @bind-Value="dto.Descripcion" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                              Lines="3" Required="true" RequiredError="Ingrese la descripcion del ticket"
+                              Style="font-size:13.5px; color:#221F1A" />
+            </div>
+            
+            @*----------------------------------Icono---------------------------------------------------*@
+            <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 6px">
+                Icono
+            </MudText>
+            <div style="display: grid; grid-template-columns: repeat(6, 60px); justify-content: space-between; margin-bottom: 16px; justify-items: center">
+                @foreach (var clave in CategoriaIconHelper.ClavesDisponibles())
+                {
+                    var seleccionado = clave == dto.Icono;
+                    <div @onclick="() => dto.Icono = clave"
+                         style="@($"display:flex; align-items:center; border-radius:11px; cursor:pointer; " +
+                                $"border:1.5px solid {(seleccionado ? "var(--mud-palette-primary)" : "rgba(33,29,24,.12)")}; " +
+                                $"background:{(seleccionado ? "var(--accent-soft)" : "#fff")}; justify-content:center; width:60px; height:60px; margin-bottom: 8px; ")">
+                        <MudIcon Icon="@CategoriaIconHelper.ObtenerCategoria2Icon(clave)" Style="@($"font-size:18px; color:{(seleccionado ? "var(--mud-palette-primary)" : "#756F63")}")"/>
+                    </div>
+                }
+            </div>
+            @*--------------------Prioridad------------------------*@
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Prioridad sugerida</MudText>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap">
+                @foreach (var prioridad in Enum.GetValues<PrioridadTicket>())
+                {
+                    var seleccionado = prioridad == dto.PrioridadSugerida;
+
+                    <div @onclick="() => dto.PrioridadSugerida = prioridad"
+                         style="@($"border-radius:20px; padding:6px 14px; font-size:12.5px; cursor:pointer; " +
+                                $"border:1.5px solid {(seleccionado ? "var(--mud-palette-primary)" : "rgba(33,29,24,.12)")}; " +
+                                $"background:{(seleccionado ? "var(--mud-palette-primary)" : "transparent")}; " +
+                                $"color:{(seleccionado ? "#fff" : "#756F63")}; " +
+                                $"font-weight:{(seleccionado ? 600 : 500)}")">
+                        @prioridad
+                    </div>
+                }
+            </div>
+            
+            @*-----------------------------------Vencimiento----------------------------------------*@
+
+            @if (usarFechaVencimiento)
+            {
+                <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Días de vencimiento</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px">
+                    <MudNumericField T="int?" @bind-Value="dto.DiasVencimiento" Min="1" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                                     Style="font-size:13.5px; color:#221F1A"/>
+                </div>
+                <MudText Style="font-size:12.5px; color:#948C7D; margin-top:6px; margin-bottom:16px">Vacío = sin vencimiento</MudText>
+            }
+
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid">Crear</MudButton>
+        <MudButton OnClick="Cancel"
+                   Style="font-size:13.5px; font-weight:600; color:#756F63; text-transform:none">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid"
+                   Style="border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:700; text-transform:none">
+            Guardar categoría
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -57,7 +97,8 @@
     private bool IsValid;
     private CrearCategoriaDto dto = new()
     {
-        PrioridadSugerida = PrioridadTicket.Media
+        PrioridadSugerida = PrioridadTicket.Media,
+        Icono = "Computer"
     };
 
     protected override void OnInitialized()

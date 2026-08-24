@@ -65,11 +65,15 @@
                             <MudTd DataLabel="Estado">
                                 @if (context.Activa)
                                 {
-                                    <span style="color:#1E8E5A; background:#DFF3E7; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600"/>
+                                    <span style="color:#1E8E5A; background:#DFF3E7; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600">
+                                        Activa    
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span style="color:#948C7D; background:#EDE9DF; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600 "/>
+                                    <span style="color:#948C7D; background:#EDE9DF; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600 ">
+                                        Inactiva
+                                    </span>
                                 }
                             </MudTd>
                             <MudTd DataLabel="Acciones">
@@ -172,7 +176,7 @@
     //llamo al dialogo
     private async Task OpenDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         DialogParameters<CrearCategoriaDialog> parameters = new()
         {
             { x => x.usarFechaVencimiento, configuracion?.UsarFechaVencimiento ?? false }
