@@ -19,6 +19,7 @@ public interface IUsuarioService
     Task<UsuarioDto[]> GetUsuariosAsignablesAsync();
     Task<ResultadoApi> UpdateUsuarioRolAsync(int id, ActualizarRolDto dto);
     Task<UsuarioDto?> GetMiPerfilAsync();
+    Task<ResultadoApi> UpdateUsuarioEmailAsync(int id, CambiarEmailDto dto);
 }
 
 public class UsuarioService (HttpClient http) : IUsuarioService
@@ -111,5 +112,11 @@ public class UsuarioService (HttpClient http) : IUsuarioService
             return null;
         }
 
+    }
+    //Actualizo el correo de la persona
+    public async Task<ResultadoApi> UpdateUsuarioEmailAsync(int id, CambiarEmailDto dto)
+    {
+        var updated = await http.PutAsJsonAsync($"usuarios/{id}/email", dto);
+        return updated.IsSuccessStatusCode ? new ResultadoApi(true, null) : new ResultadoApi(false, await updated.LeerErrorAsync());
     }
 }

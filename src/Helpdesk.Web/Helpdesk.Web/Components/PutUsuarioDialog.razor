@@ -6,19 +6,74 @@
 
 <MudDialog>
     <TitleContent>
-        Editar Usuario
+        <MudText Style="font-size: 18px; font-weight: 700; color: #221F1A; margin-bottom: 22px">Editar Usuario</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="IsValid">
-            <MudTextField T="string" Label="Nombre" @bind-Value="dto.Nombre" Required="true" RequiredError="Ingrese el nombre de usuario"></MudTextField>
-            <MudTextField T="string" Label="NombrePila" @bind-Value="dto.NombrePila" Required="true" RequiredError="Ingrese el nombre del usuario"></MudTextField>
-            <MudTextField T="string" Label="ApellidoPila" @bind-Value="dto.ApellidoPila" Required="true" RequiredError="Ingrese el apellido del usuario"></MudTextField>
+            <div style="display: flex; gap: 14px;">
+                <div style="flex:1; min-width: 0">
+                    <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 6px">Nombre de pila</MudText>
+                    <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                        <MudTextField T="string" Underline="false" Margin="Margin.Dense"
+                                      @bind-Value="dto.NombrePila" Required="true"
+                                      RequiredError="Ingrese el nombre real del usuario"
+                                      Style="font-size:13.5px; color:#221F1A"/>
+                    </div>
+                </div>
+
+                <div style="flex:1; min-width: 0">
+                    <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 6px">Apellido</MudText>
+                    <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                        <MudTextField T="string" Underline="false" Margin="Margin.Dense"
+                                      @bind-Value="dto.ApellidoPila" Required="true"
+                                      RequiredError="Ingrese el apellido del usuario"
+                                      Style="font-size:13.5px; color:#221F1A"/>
+                    </div>
+                </div>
+            </div>
+
+            <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 6px">Email</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                <MudTextField T="string" @bind-Value="email" Required="true" Underline="false" Margin="Margin.Dense"
+                              RequiredError="Ingrese el Email del usuario"
+                              InputType="InputType.Email"
+                              Style="font-size:13.5px; color:#221F1A"/>
+            </div>
+
+            <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A; margin-bottom: 6px">Nombre de usuario</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:6px">
+                <MudTextField T="string" @bind-Value="dto.Nombre" Required="true" Underline="false" Margin="Margin.Dense"
+                              RequiredError="Ingrese el nombre de usuario"
+                              Style="font-size:13.5px; color:#221F1A"/>
+            </div>
+            <MudText Style="font-size: 12.5px; color: #948C7D; margin-bottom: 16px">Se usa para iniciar sesión</MudText>
+
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Rol</MudText>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap">
+                @foreach (var r in Enum.GetValues<RolUsuario>())
+                {
+                    var seleccionado = rol == r;
+                    <div @onclick="() => rol = r"
+                         style="@($"border-radius:20px; padding:6px 14px; font-size:12.5px; cursor:pointer; " +
+                                $"border:1.5px solid {(seleccionado ? "var(--mud-palette-primary)" : "rgba(33,29,24,.12)")}; " +
+                                $"background:{(seleccionado ? "var(--mud-palette-primary)" : "transparent")}; " +
+                                $"color:{(seleccionado ? "#fff" : "#756F63")}; " +
+                                $"font-weight:{(seleccionado ? 600 : 500)}")">
+                        @r
+                    </div>
+                }
+            </div>
         </MudForm>
     </DialogContent>
-
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary">Editar</MudButton>
+        <MudButton OnClick="Cancel"
+                   Style="font-size:13.5px; font-weight:600; color:#756F63; text-transform:none">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid"
+                   Style="border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:700; text-transform:none">
+            Guardar cambios
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -33,6 +88,9 @@
     private MudForm form;
     private bool IsValid;
     private PutUsuarioDto dto;
+    
+    private string? email;
+    private RolUsuario rol;
 
     protected override void OnInitialized()
     {
@@ -43,31 +101,62 @@
     private async Task Submit()
     {
         await form.ValidateAsync();
-        if (IsValid)
-        {
-            var id = usuario.Id;
+        if (!IsValid) return;
 
-            var hasEdited = await usuarioService.UpdateUsuarioAsync(id, dto);
-            if (!hasEdited.Exito)
+        bool huboError = false;
+
+        //---------------------Actualizar nombres del usuario--------------------------------
+        if (dto.Nombre != usuario.Nombre || dto.NombrePila != usuario.NombrePila || dto.ApellidoPila != usuario.ApellidoPila)
+        {
+            var resultadoUsuario = await usuarioService.UpdateUsuarioAsync(usuario.Id, dto);
+            if (resultadoUsuario.Exito)
             {
-                snackbar.Add(hasEdited.Error ?? "Se ha producido un error, intente de nuevo", Severity.Error);
+                usuario.Nombre = dto.Nombre;
+                usuario.NombrePila = dto.NombrePila;
+                usuario.ApellidoPila = dto.ApellidoPila;
             }
             else
             {
-                var edit = new UsuarioDto
-                    {
-                        Id = usuario.Id,
-                        Nombre = dto.Nombre,
-                        Email = usuario.Email,
-                        NombrePila = dto.NombrePila,
-                        ApellidoPila = dto.ApellidoPila,
-                        Rol = usuario.Rol,
-                        Estado = usuario.Estado
-                    };
-                MudDialog.Close(DialogResult.Ok(edit));
-                snackbar.Add("Usuario editado!", Severity.Info);
+                huboError = true;
+                snackbar.Add(resultadoUsuario.Error ?? "No se pudo actualizar el usuario", Severity.Error);
             }
         }
+
+        //--------------------------------actualizar el mail del usuario-------------------------------------------
+        if (email != usuario.Email)
+        {
+            var resultadoMail = await usuarioService.UpdateUsuarioEmailAsync(usuario.Id, (new CambiarEmailDto { NewEmail = email }));
+            if (resultadoMail.Exito)
+            {
+                usuario.Email = email;
+            }
+            else
+            {
+                huboError = true;
+                snackbar.Add(resultadoMail.Error ?? "No se pudo actualizar el email del usuario", Severity.Error);
+            }
+        }
+        
+        //-----------------------------------------Actualizar el rol del usuario---------------------------------------
+        if (rol != usuario.Rol)
+        {
+            var resultadoRol = await usuarioService.UpdateUsuarioRolAsync(usuario.Id, new ActualizarRolDto { RolUsuario = rol });
+            if (resultadoRol.Exito)
+            {
+                usuario.Rol = rol;
+            }
+            else
+            {
+                huboError = true;
+                snackbar.Add(resultadoRol.Error ?? "No se pudo actualizar el rol del usuario", Severity.Error);
+            }
+        }
+
+        if (!huboError)
+        {
+            snackbar.Add("Usuario actualizado!", Severity.Info);
+        }
+        MudDialog.Close(DialogResult.Ok(usuario));
     }
 
 }

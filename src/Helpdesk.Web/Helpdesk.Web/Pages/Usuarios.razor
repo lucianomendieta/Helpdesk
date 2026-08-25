@@ -78,9 +78,6 @@
 
                 @* Acciones: sin Color.Secondary ni Color.Warning *@
                 <MudTd @onclick:stopPropagation="true">
-                    <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
-                                   Style="color:#756F63"
-                                   OnClick="@(() => ShowCambiarRolDialogAsync(context))" />
                     <MudIconButton Icon="@Icons.Material.Filled.Key"
                                    Style="color:#756F63"
                                    OnClick="@(() => ShowResetPasswordDialogAsync(context))" />
@@ -172,15 +169,5 @@
         {
             snackbar.Add("Se ha reiniciado la contraseña con éxito", Severity.Success);
         }
-    }
-
-    private async Task ShowCambiarRolDialogAsync(UsuarioDto usuarioAEditar)
-    {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
-        var parameters = new DialogParameters<CambiarRolDialog> { { x => x.usuario, usuarioAEditar } };
-
-        var dialog = await dialogService.ShowAsync<CambiarRolDialog>("Cambiar rol", parameters, options);
-
-        await dialog.Result;
     }
 }
