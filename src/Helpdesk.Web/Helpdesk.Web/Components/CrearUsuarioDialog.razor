@@ -7,26 +7,119 @@
 
 <MudDialog>
     <TitleContent>
-        Nuevo Usuario
+        <MudText Style="font-size: 18px; font-weight: 700; color: #221F1A;">Nuevo Usuario</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="IsValid">
-            <MudTextField T="string" Label="Nombre de usuario" @bind-Value="dto.Nombre" Required="true" RequiredError="Ingrese el nombre de usuario"/>
-            <MudTextField T="string" Label="Email" @bind-Value="dto.Email" Required="true" RequiredError="Ingrese el Email del usuario" />
-            <MudTextField T="string" Label="Nombre" @bind-Value="dto.NombrePila" Required="true" RequiredError="Ingrese el nombre real del usuario" />
-            <MudTextField T="string" Label="Apellido" @bind-Value="dto.ApellidoPila" Required="true" RequiredError="Ingrese el apellido del usuario" />
-            <MudTextField T="string" Label="Contraseña" @bind-Value="dto.Password" Required="true" RequiredError="Ingrese una contraseña" />
-            <MudSelect T="RolUsuario" Label="Rol" @bind-Value="dto.Rol" Required="true" RequiredError="Debe asignar un rol al usuario" >
+            <div style="display: flex; gap: 14px;">
+                @*----------------------------NOMBRE Y APELLIDO-------------------------------------*@
+                <div style="flex:1; min-width: 0">
+                    <MudStack>
+                        <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A">Nombre de pila</MudText>
+                        <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                            <MudTextField T="string" 
+                                          Underline="false" 
+                                          @bind-Value="dto.NombrePila" 
+                                          Required="true" 
+                                          RequiredError="Ingrese el nombre real del usuario"
+                                          Style="font-size:13.5px; color:#221F1A"/>
+                        </div>
+                    </MudStack>
+                </div> 
+                
+                <div style="flex: 1; min-width: 0">
+                    <MudStack>
+                        <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A;">Apellido</MudText>
+                        <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                            <MudTextField T="string" 
+                                          Underline="false" 
+                                          @bind-Value="dto.ApellidoPila" 
+                                          Required="true" 
+                                          RequiredError="Ingrese el apellido del usuario"
+                                          Style="font-size:13.5px; color:#221F1A"/>
+                        </div>
+                    </MudStack>
+                </div>
+                
+                
+            </div>
+            
+            <MudStack>
+                <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A;">Email</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                    <MudTextField T="string" 
+                                  @bind-Value="dto.Email" 
+                                  Required="true" 
+                                  Underline="false"
+                                  Margin="Margin.Dense"
+                                  RequiredError="Ingrese el Email del usuario"
+                                  InputType="InputType.Email"
+                                  Style="font-size:13.5px; color:#221F1A"/>
+                </div>
+                
+            </MudStack>
+            
+            <MudStack>
+                <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A">Nombre de usuario</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px">
+                    <MudTextField T="string" 
+                                  @bind-Value="dto.Nombre" 
+                                  Required="true" 
+                                  Underline="false"
+                                  Margin="Margin.Dense"
+                                  RequiredError="Ingrese el nombre de usuario"
+                                  Style="font-size:13.5px; color:#221F1A"/>
+                </div>
+                
+                <MudText Style="font-size: 10px; color: #948C7D; margin-bottom: 6px">Se usa para iniciar sesion</MudText>
+            </MudStack>
+            
+            <MudStack>
+                <MudText Style="font-size: 12.5px; font-weight: 600; color: #221F1A">Contraseña</MudText>
+                <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:5px 14px; margin-bottom:16px">
+                    <MudTextField T="string" 
+                                  @bind-Value="dto.Password" 
+                                  Required="true" 
+                                  RequiredError="Ingrese una contraseña"
+                                  InputType="@(mostrarPassword ? InputType.Text : InputType.Password)"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@(mostrarPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                  OnAdornmentClick="togglemostrarPassword"
+                                  Underline="false"
+                                  Margin="Margin.Dense"
+                                  Style="font-size:13.5px; color:#221F1A"/>
+                </div>
+                
+            </MudStack>
+            
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Rol</MudText>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap">
                 @foreach (var rol in Enum.GetValues<RolUsuario>())
                 {
-                    <MudSelectItem T="RolUsuario" Value="rol">@rol</MudSelectItem>
-                }    
-            </MudSelect>
+                    var seleccionado = dto.Rol == rol;
+                    <div @onclick="() => dto.Rol = rol"
+                         style="@($"border-radius:20px; padding:6px 14px; font-size:12.5px; cursor:pointer; " +
+                                $"border:1.5px solid {(seleccionado ? "var(--mud-palette-primary)" : "rgba(33,29,24,.12)")}; " +
+                                $"background:{(seleccionado ? "var(--mud-palette-primary)" : "transparent")}; " +
+                                $"color:{(seleccionado ? "#fff" : "#756F63")}; " +
+                                $"font-weight:{(seleccionado ? 600 : 500)}")">
+                        @rol
+                    </div>
+                }
+            </div>
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary" Disabled="!IsValid">Crear</MudButton>
+        <MudButton OnClick="Cancel"
+                   Style="font-size:13.5px; font-weight:600; color:#756F63; text-transform:none">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="Submit" 
+                   Color="Color.Primary" 
+                   Disabled="!IsValid"
+                   Style="border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:700; text-transform:none">
+            Crear
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -38,6 +131,8 @@
     private MudForm form;
     private bool IsValid;
     private CrearUsuarioDto dto = new();
+
+    private bool mostrarPassword;
 
     private void Cancel() => MudDialog.Cancel();
 
@@ -59,4 +154,6 @@
             }
         }
     }
+
+    private void togglemostrarPassword() => mostrarPassword = !mostrarPassword;
 }
