@@ -247,7 +247,7 @@ public static class AdjuntoEndpoints
 
 
     //Borro un archivo almacenado en bd
-    private static async Task<IResult> DeleteAdjunto(int adjuntoId, int ticketId, HelpdeskDbContext contexto, HttpContext http, IAlmacenamientoAdjuntos almacenamiento)
+    private static async Task<IResult> DeleteAdjunto(int adjuntoId, int ticketId, HelpdeskDbContext contexto, HttpContext http, IAlmacenamientoAdjuntos almacenamiento) 
     {
         //Valido los permisos del usuario logueado
         #region Validacion de permisos

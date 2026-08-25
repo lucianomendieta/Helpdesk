@@ -238,6 +238,7 @@ public static class UsuariosEndpoints
     {
         var uAsignables = await contexto.Usuarios
             .Where(u => u.Rol == RolUsuario.Agente || u.Rol == RolUsuario.Analista) //Filtro aca y luego selecciono
+            .Where(u => u.Estado == EstadoUsuario.Activo) //Si esta bloqueado o inactivo, no es asignable
             .Select(u => new UsuarioResponseDto(
             u.Id,
             u.Nombre,

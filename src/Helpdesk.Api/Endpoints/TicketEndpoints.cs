@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 
+using Helpdesk.Api.Almacenamiento;
 using Helpdesk.Api.Authorization;
 using Helpdesk.Api.Data;
 using Helpdesk.Api.Dtos;
@@ -279,7 +280,7 @@ public static class TicketEndpoints
                     col.Spacing(10);
                     
                     col.Item().Text($"Periodo: {desdeFinal:dd/MM/yyyy} - {hastaFinal:dd/MM/yyyy}");
-                    col.Item().Text($"Tiempo de resolucion promedio: {resumen.TiempoResolucion.PromedioDias?.ToString("F1" + " dias") ?? "N/D"} ");
+                    col.Item().Text($"Tiempo de resolucion promedio: {(resumen.TiempoResolucion.PromedioDias is null ? "N/D" : $"{resumen.TiempoResolucion.PromedioDias:F1} dias")} ");
 
                     #region Detalle de tickets
 
@@ -530,6 +531,12 @@ public static class TicketEndpoints
         {
             return Results.BadRequest("No se encontro el usuario a asignar");
         }
+        
+        //Verifico que el agente este activo
+        if (agente.Estado != EstadoUsuario.Activo)
+        {
+            return Results.BadRequest("Solo puede asignar un agente/analista activo.");
+        }
 
         //verifico si es cliente, sino no se puede asignar
         if (agente.Rol == RolUsuario.Agente || agente.Rol == RolUsuario.Analista)
@@ -542,6 +549,8 @@ public static class TicketEndpoints
         {
             return Results.BadRequest("Solo puede asignar a un Agente o Analista.");
         }
+        
+        
     }
 
     //Cambiar de estados
@@ -735,15 +744,37 @@ public static class TicketEndpoints
     }
 
     //Borrar un ticket
-    private static async Task<IResult> DeleteTicket(int id, HelpdeskDbContext contexto)
+    private static async Task<IResult> DeleteTicket(int id, HelpdeskDbContext contexto, IAlmacenamientoAdjuntos almacenamiento)
     {
+        // Guardo los nombres de archivo ANTES de borrar (después de esto, las filas ya no van a existir)
+        var nombresArchivos = await contexto.TicketAdjuntos
+            .Where(a => a.TicketId == id)
+            .Select(a => a.NombreAlmacenado)
+            .ToListAsync();
+        
         var ticket = await contexto.Tickets.FindAsync(id);
         if (ticket is null)
         {
             return Results.NotFound();
         }
+        
         contexto.Tickets.Remove(ticket);
         await contexto.SaveChangesAsync();
+        
+        //Itero cada nombre dentro la coleccion para borrar en disco uno a uno
+        foreach (var archivo in nombresArchivos)
+        {
+            try
+            {
+                await almacenamiento.BorrarArchivoAsync(archivo);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"El archivo {archivo} no se pudo borrar: " + e.ToString());
+            }
+            
+        }
+        
         return Results.NoContent();
     }
 
