@@ -171,7 +171,7 @@ public static class AdjuntoEndpoints
 
         var usuarioInt = int.Parse(usuario);
 
-        if (!TicketPermisos.EsParticipante(ticket, rol, usuarioInt))
+        if (!TicketPermisos.PuedeVer(ticket, rol, usuarioInt))
         {
             return Results.Forbid();
         }
@@ -216,7 +216,7 @@ public static class AdjuntoEndpoints
 
         var usuarioInt = int.Parse(usuario);
 
-        if (!TicketPermisos.EsParticipante(ticket, rol, usuarioInt))
+        if (!TicketPermisos.PuedeVer(ticket, rol, usuarioInt))
         {
             return Results.Forbid();
         }

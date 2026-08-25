@@ -15,6 +15,7 @@
 @inject NavigationManager navigationManager;
 @inject ICategoriaService CategoriaService;
 @inject IConfiguracionService ConfiguracionService;
+@inject IAdjuntoService AdjuntoService;
 
 @attribute [Authorize]
 @page "/tickets/{Id:int}"
@@ -69,8 +70,18 @@ else
                 <MudText Style="font-size:12.5px; font-weight:700; color:#948C7D; text-transform:uppercase; letter-spacing:.03em; margin-bottom: 15px">
                     Adjuntos
                 </MudText>
-                <GaleriaAdjuntos TicketId="Id" />
-                <ListaDocumentos TicketId="Id" />
+                <GaleriaAdjuntos TicketId="Id" PuedeSubir="EsParticipante" />
+                <ListaDocumentos TicketId="Id" PuedeSubir="EsParticipante" />
+                
+                @if (error)
+                {
+                    <MudAlert Severity="Severity.Error">No se pudieron cargar las imagenes</MudAlert>
+                }
+                
+                @if (adjuntos.Length == 0)
+                {
+                    <MudText>Aqui no hay adjuntos, ingresa una evidencia para tu ticket!</MudText>
+                }
             </MudPaper>
             
             <MudPaper Style="background:#fff; border:1px solid var(--borde-sutil); border-radius:16px; padding:22px;  margin-top: 15px;">
@@ -107,31 +118,39 @@ else
                         }
                     </MudStack>
                 }
-                <MudForm @ref="form" @bind-IsValid="isvalid" >
-                    <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:12px; padding:12px 14px; margin-top: 15px" >
-                        <MudTextField @bind-Value="detalleDto.Comentario" 
-                                      Lines="3" 
-                                      Variant="Variant.Text" 
-                                      Underline="false"
-                                      Placeholder="Escribi un comentario..." Required="true"/>
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                            <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                                <div @onclick="@(() => detalleDto.EsInterno = !detalleDto.EsInterno)"
-                                     style="@($"display:flex; align-items:center; gap:8px; font-size:12.5px; " +
-                                            $"font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; " +
-                                            $"background:{(detalleDto.EsInterno ? "#FBF1D6" : "#F0EDE4")}; " +
-                                            $"color:{(detalleDto.EsInterno ? "#8A6D18" : "#756F63")}")">
-                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size: 16px" />
-                                    <MudText>Nota interna (solo staff)</MudText>
-                                </div>
-                            </AuthorizeView>
-                            <MudButton Variant="Variant.Filled" 
-                                       Color="Color.Primary" 
-                                       OnClick="AgregarComentarioAsync"
-                                       Style="border-radius:10px; padding:9px 18px; font-weight:700; font-size:13px">Agregar comentario</MudButton>
-                        </MudStack>
-                    </div>
-                </MudForm>
+                @if (EsParticipante)
+                {
+                    <MudForm @ref="form" @bind-IsValid="isvalid" >
+                        <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:12px; padding:12px 14px; margin-top: 15px" >
+                            <MudTextField @bind-Value="detalleDto.Comentario"
+                                          Lines="3"
+                                          Variant="Variant.Text"
+                                          Underline="false"
+                                          Placeholder="Escribi un comentario..." Required="true"/>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
+                                    <div @onclick="@(() => detalleDto.EsInterno = !detalleDto.EsInterno)"
+                                         style="@($"display:flex; align-items:center; gap:8px; font-size:12.5px; " +
+                                                $"font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; " +
+                                                $"background:{(detalleDto.EsInterno ? "#FBF1D6" : "#F0EDE4")}; " +
+                                                $"color:{(detalleDto.EsInterno ? "#8A6D18" : "#756F63")}")">
+                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Style="font-size: 16px" />
+                                        <MudText>Nota interna (solo staff)</MudText>
+                                    </div>
+                                </AuthorizeView>
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           OnClick="AgregarComentarioAsync"
+                                           Disabled="enviandoComentario"
+                                           Style="border-radius:10px; padding:9px 18px; font-weight:700; font-size:13px">Agregar comentario</MudButton>
+                            </MudStack>
+                        </div>
+                    </MudForm>
+                }
+                else
+                {
+                    <MudText Style="font-size:13px; color:#948C7D; margin-top:15px">No podés comentar en este ticket.</MudText>
+                }
                 
             
             </MudPaper>
@@ -148,44 +167,44 @@ else
 
                     @*ESTADO DEL TICKET*@
                     <MudText Style="font-size:11.5px; color:#948C7D">Estado</MudText>
-                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                        <Authorized>
-                            <div style="@ticket!.Estado.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
-                                <MudSelect T="EstadoTicket" Variant="Variant.Text" Value="ticket!.Estado" 
-                                           Underline="false" ValueChanged="ChangeEstadoAsync" Margin="Margin.Dense">
-                                    @foreach (var estado in Enum.GetValues<EstadoTicket>())
-                                    {
-                                        <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </div>
-                        </Authorized>
-                        <NotAuthorized>
-                            <MudChip T="string">@ticket?.Estado</MudChip>
-                        </NotAuthorized>
-                    </AuthorizeView>
+                    @if (PuedeGestionar)
+                    {
+                        <div style="@ticket!.Estado.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
+                            <MudSelect T="EstadoTicket" Variant="Variant.Text" Value="ticket!.Estado"
+                                       Underline="false" ValueChanged="ChangeEstadoAsync" Margin="Margin.Dense">
+                                @foreach (var estado in Enum.GetValues<EstadoTicket>())
+                                {
+                                    <MudSelectItem T="EstadoTicket" Value="estado">@estado</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudChip T="string">@ticket?.Estado</MudChip>
+                    }
 
                     @*PRIORIDAD*@
                     <MudText Style="font-size:11.5px; color:#948C7D">Prioridad</MudText>
-                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                        <Authorized>
-                            <div style="@ticket!.Prioridad.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
-                                <MudSelect T="PrioridadTicket" Variant="Variant.Text" Margin="Margin.Dense" 
-                                           Underline="false" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
-                                    @foreach (var p in Enum.GetValues<PrioridadTicket>())
-                                    {
-                                        <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </div>
-                        </Authorized>
-                        <NotAuthorized>
-                            <MudStack Row="true">
-                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()"/>
-                                <MudText>@ticket!.Prioridad</MudText>
-                            </MudStack>
-                        </NotAuthorized>
-                    </AuthorizeView>
+                    @if (PuedeGestionar)
+                    {
+                        <div style="@ticket!.Prioridad.ChipStyle(padding: "6px 12px", radius: "10px", fontSize: "13px")">
+                            <MudSelect T="PrioridadTicket" Variant="Variant.Text" Margin="Margin.Dense"
+                                       Underline="false" Value="ticket!.Prioridad" ValueChanged="ChangePrioridadAsync">
+                                @foreach (var p in Enum.GetValues<PrioridadTicket>())
+                                {
+                                    <MudSelectItem T="PrioridadTicket" Value="p">@p</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudStack Row="true">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ticket!.Prioridad.GetColor()"/>
+                            <MudText>@ticket!.Prioridad</MudText>
+                        </MudStack>
+                    }
 
                     @*ASIGNACION DE AGENTES*@
                     <MudText Style="font-size:11.5px; color:#948C7D">Agente</MudText>
@@ -210,22 +229,25 @@ else
 
                     @*SELECT DE CATEGORIAS*@
                     <MudText Style="font-size:11.5px; color:#948C7D">Categoria</MudText>
-                    <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                        <Authorized>
-                            <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px; padding-left:12px">
-                                <MudSelect T="int?" Variant="Variant.Text" Margin="Margin.Dense" 
-                                           Underline="false" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
-                                    @if (categorias is not null)
+                    @if (PuedeGestionar)
+                    {
+                        <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px; padding-left:12px">
+                            <MudSelect T="int?" Variant="Variant.Text" Margin="Margin.Dense"
+                                       Underline="false" Value="ticket!.CategoriaId" ValueChanged="ChangeCategoriaAsync">
+                                @if (categorias is not null)
+                                {
+                                    @foreach (var c in categorias)
                                     {
-                                        @foreach (var c in categorias)
-                                        {
-                                            <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
-                                        }
+                                        <MudSelectItem T="int?" Value="c.Id">@c.Nombre</MudSelectItem>
                                     }
-                                </MudSelect>
-                            </div>
-                        </Authorized>
-                    </AuthorizeView>
+                                }
+                            </MudSelect>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@(ticket?.CategoriaNombre ?? "Sin categoria")</MudText>
+                    }
 
                     @*Nombre del cliente*@
                     <MudText Style="font-size:11.5px; color:#948C7D">Cliente</MudText>
@@ -235,21 +257,21 @@ else
                     @if (configuracion?.UsarFechaVencimiento == true)
                     {
                         <MudText Style="font-size:11.5px; color:#948C7D">Fecha de vencimiento</MudText>
-                        <AuthorizeView Roles="Agente,Analista,Administrador,Gerente">
-                            <Authorized>
-                                <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px;padding-left:12px">
-                                    <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)"
-                                                   DateChanged="ChangeVencimientoAsync"
-                                                   Clearable="true"
-                                                   Underline="false"
-                                                   Variant="Variant.Text"
-                                                   Margin="Margin.Dense" />
-                                </div>
-                            </Authorized>
-                            <NotAuthorized>
-                                <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
-                            </NotAuthorized>
-                        </AuthorizeView>
+                        @if (PuedeGestionar)
+                        {
+                            <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px;padding-left:12px">
+                                <MudDatePicker Date="@(ticket?.FechaVencimiento?.DateTime)"
+                                               DateChanged="ChangeVencimientoAsync"
+                                               Clearable="true"
+                                               Underline="false"
+                                               Variant="Variant.Text"
+                                               Margin="Margin.Dense" />
+                            </div>
+                        }
+                        else
+                        {
+                            <MudText Style="font-size:13.5px; color:#221F1A; font-weight:500">@(ticket?.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Sin fecha asignada")</MudText>
+                        }
                     }
 
                     @*Creado en fecha:*@
@@ -266,6 +288,7 @@ else
 
 @code {
     private bool isvalid;
+    private bool enviandoComentario;
     private MudForm form;
 
     //Parametros
@@ -281,15 +304,32 @@ else
     private UsuarioDto[]? agentes;
     private CrearTicketDetalleDto detalleDto = new ();
     private CategoriaResponseDto[]? categorias;
+    private AdjuntoResponseDto[]? adjuntos;
     
     //Estados
     private EstadoResponse? estadoResponse;
+    private bool error;
 
     //configuracion
     private ConfiguracionResponseDto? configuracion;
-    
+
+    //Permisos del usuario logueado sobre este ticket puntual
+    private string? rolActual;
+    private int usuarioActualId;
+
     //Campo calculado
     private UsuarioDto? AgenteActual => agentes?.FirstOrDefault(a => a.Id == ticket?.AgenteAsignadoId);
+
+    //Espeja TicketPermisos.PuedeGestionar del backend: admin/gerente siempre, agente/analista solo si es su ticket asignado
+    private bool PuedeGestionar => ticket is not null &&
+        (rolActual is "Administrador" or "Gerente" ||
+         (rolActual is "Agente" or "Analista" && ticket.AgenteAsignadoId == usuarioActualId));
+
+    //Espeja TicketPermisos.EsParticipante del backend: agrega al cliente dueño del ticket
+    private bool EsParticipante => ticket is not null &&
+        (rolActual is "Administrador" or "Gerente" ||
+         (rolActual == "Cliente" && ticket.UsuarioCreo == usuarioActualId) ||
+         (rolActual is "Agente" or "Analista" && ticket.AgenteAsignadoId == usuarioActualId));
 
     protected override async Task OnInitializedAsync()
     {
@@ -297,39 +337,63 @@ else
         estadoResponse = resultado.Estado;
         ticket = resultado.Ticket;
         configuracion = await ConfiguracionService.GetConfiguracionAsync();
-        
+        adjuntos = await AdjuntoService.ListarAdjuntosAsync(ticket!.Id);
+        if (adjuntos is null)
+        {
+            error = true;
+            return;
+        }
 
         if (estadoResponse == EstadoResponse.Ok)
         {
             ticketDetalles = await ticketDetalle.GetDetallesAsync(Id);
             var authState = await authstateTask!;
             var user = authState.User;
+            //OJO: en el token los claims se llaman "role"/"nameid" (nombres cortos del JWT), NO las URIs de ClaimTypes
+            rolActual = user.FindFirst("role")?.Value;
+            int.TryParse(user.FindFirst("nameid")?.Value, out usuarioActualId);
+
             if (user.IsInRole("Administrador") || user.IsInRole("Gerente"))
             {
                 agentes = await usuarioService.GetUsuariosAsignablesAsync();
+            }
+            //Cargo categorias para cualquiera que pueda gestionar el ticket (admin/gerente o el agente asignado)
+            if (PuedeGestionar)
+            {
                 categorias = await CategoriaService.GetCategoriasActivasAsync();
             }
         }
-    }  
+    }
 
     private async Task AgregarComentarioAsync()
     {
+        //Guard anti doble-submit: si ya hay un envio en curso, no hago nada
+        if (enviandoComentario) { return; }
+
         await form.ValidateAsync();
         if (isvalid)
         {
-            //Espero el resultado del post
-            var resultado = await ticketDetalle.CreateDetalleAsync(Id, detalleDto);
+            enviandoComentario = true;
+            try
+            {
+                //Espero el resultado del post
+                var resultado = await ticketDetalle.CreateDetalleAsync(Id, detalleDto);
 
-            //Si fue exitoso, se mete al array y limpio el dto
-            if (resultado.Exito && resultado.Data is not null)
-            {
-                ticketDetalles = ticketDetalles?.Append(resultado.Data).ToArray();
-                detalleDto = new();
-                await form.ResetAsync();
+                //Si fue exitoso, se mete al array y limpio el dto
+                if (resultado.Exito && resultado.Data is not null)
+                {
+                    ticketDetalles = ticketDetalles?.Append(resultado.Data).ToArray();
+                    detalleDto = new();
+                    await form.ResetAsync();
+                }
+                else
+                {
+                    snackbar.Add(resultado.Error ?? "No se pudo agregar el comentario", Severity.Error);
+                }
             }
-            else
+            finally
             {
-                snackbar.Add(resultado.Error ?? "No se pudo agregar el comentario", Severity.Error);
+                enviandoComentario = false;
             }
         }
     }

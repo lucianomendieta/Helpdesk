@@ -18,31 +18,35 @@ else if (adjuntos is null)
 else
 {
     <MudStack Row="true" Wrap="Wrap.Wrap" Style="gap: 10px;margin-bottom: 15px">
-        <MudFileUpload T="IBrowserFile"
-                       FilesChanged="UploadAsync"
-                       Accept=".jpg,.jpeg,.png,.webp"
-                       MaxFileSize="@(5 * 1024 * 1024)"
-                       @ref="fileUpload"> 
-            
-            <CustomContent>
-                <MudPaper
-                    Style="background:repeating-linear-gradient(135deg,#EDE9DF,#EDE9DF 8px,#E4DFD2 8px,#E4DFD2 16px); 
-                    border:1px solid rgba(33,29,24,.08); border-radius:12px; cursor: pointer; width:100px; height:100px; padding: 5px" 
-                    @onclick="@(() => context.OpenFilePickerAsync())"
-                    Class="d-flex flex-column align-content-center justify-content-center"
-                    >
-                    <MudIcon Icon="@Icons.Material.Filled.Image" Style="font-size:20px; color:#948C7D" Size="Size.Small" />
-                    <MudText Style="font-size: 15px; color: #948C7D">Adjuntar imagen</MudText>
-                </MudPaper>
-            </CustomContent>
-                   
-        </MudFileUpload>
+        @if (PuedeSubir)
+        {
+            <MudFileUpload T="IBrowserFile"
+                           FilesChanged="UploadAsync"
+                           Accept=".jpg,.jpeg,.png,.webp"
+                           MaxFileSize="@(5 * 1024 * 1024)"
+                           @ref="fileUpload">
 
+                <CustomContent>
+                    <MudPaper
+                        Style="background:repeating-linear-gradient(135deg,#EDE9DF,#EDE9DF 8px,#E4DFD2 8px,#E4DFD2 16px);
+                        border:1px solid rgba(33,29,24,.08); border-radius:12px; cursor: pointer; width:100px; height:100px; padding: 5px"
+                        @onclick="@(() => context.OpenFilePickerAsync())"
+                        Class="d-flex flex-column align-content-center justify-content-center"
+                        >
+                        <MudIcon Icon="@Icons.Material.Filled.Image" Style="font-size:20px; color:#948C7D" Size="Size.Small" />
+                        <MudText Style="font-size: 15px; color: #948C7D">Adjuntar imagen</MudText>
+                    </MudPaper>
+                </CustomContent>
+
+            </MudFileUpload>
+        }
+
+        @*
         @if (adjuntos.Length == 0)
         {
         <MudText>Aqui no hay adjuntos, ingresa una evidencia para tu ticket!</MudText>
         }
-        
+        *@
 
         @foreach (var adjunto in adjuntos)
         {
@@ -64,6 +68,7 @@ else
 
 @code {
     [Parameter] public int TicketId { get; set; }
+    [Parameter] public bool PuedeSubir { get; set; }
     private AdjuntoResponseDto[]? adjuntos;
     private bool error;
     private readonly Dictionary<int, string> urls = new();

@@ -41,7 +41,7 @@ public static class TicketDetalleEndpoints
         var usuarioInt = int.Parse(usuario); //Parse para el id usuario
 
         //Si no puede ver el detalle, forbid
-        if (!TicketPermisos.EsParticipante(ticket, rol, usuarioInt))
+        if (!TicketPermisos.PuedeVer(ticket, rol, usuarioInt))
         {
             return Results.Forbid();
         }

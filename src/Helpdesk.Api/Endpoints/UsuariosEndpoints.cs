@@ -128,13 +128,22 @@ public static class UsuariosEndpoints
         {
             return Results.NotFound();
         }
-
-        usuario.Nombre = dto.Nombre;
-        usuario.NombrePila = dto.NombrePila;
-        usuario.ApellidoPila = dto.ApellidoPila;
-        await contexto.SaveChangesAsync();
-        return Results.NoContent();
         
+        //Verifico que el usuario no haya sido tomado
+        bool isTaken = await contexto.Usuarios.AnyAsync(u => u.Nombre == dto.Nombre && u.Id != id);
+
+        if (!isTaken)
+        {
+            usuario.Nombre = dto.Nombre;
+            usuario.NombrePila = dto.NombrePila;
+            usuario.ApellidoPila = dto.ApellidoPila;
+            await contexto.SaveChangesAsync();
+            return Results.NoContent();
+        }
+        else
+        {
+            return Results.BadRequest("El nombre ya esta en uso.");
+        }
     }
 
     //Borrar un usuario

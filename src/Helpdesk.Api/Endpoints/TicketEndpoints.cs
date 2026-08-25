@@ -123,16 +123,13 @@ public static class TicketEndpoints
         }
         //usuario se crea como string, parseo a int
         var usuarioInt = int.Parse(usuario);
+        
         //Si es cliente y el id de usuario es distinto al que lo creo, forbid
-        if (rol == "Cliente" && ticket.UsuarioCreo != usuarioInt)
+        if (!TicketPermisos.PuedeVer(ticket, rol, usuarioInt))
         {
             return Results.Forbid();
         }
-        //Si es agente o analista y el ticket no es el que tiene asignado, forbid
-        else if ((rol == "Agente" || rol == "Analista") && ticket.AgenteAsignadoId != usuarioInt)
-        {
-            return Results.Forbid();
-        }
+        
 
         return Results.Ok(ticket);
     }

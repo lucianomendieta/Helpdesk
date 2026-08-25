@@ -120,17 +120,33 @@ public static class CategoriaEndpoints
         //Verifico que la categoria exista
         var categoria = await contexto.Categorias.FindAsync(categoriaId);
         if (categoria == null) { return Results.NotFound(); }
-
-        //Actualizo la categoria con lo insertado
-        categoria.Nombre = dto.Nombre;
-        categoria.Descripcion = dto.Descripcion;
-        categoria.Icono = dto.Icono;
-        categoria.PrioridadSugerida = dto.PrioridadSugerida;
-        categoria.DiasVencimiento = dto.DiasVencimiento;
-
-        //Guardo la actualizacion
-        await contexto.SaveChangesAsync();
-        return Results.NoContent();
+        
+        //Que la categoria no sea del sistema
+        if (categoria.EsDelSistema)
+        {
+            return Results.BadRequest("No se puede editar una categoria del sistema.");
+        }
+        
+        //Verifico que el nombre sea unico
+        bool categoriaExists =
+            await contexto.Categorias.AnyAsync(c => c.Nombre == dto.Nombre && c.Id != categoriaId);
+        if (!categoriaExists)
+        {
+            //Actualizo la categoria con lo insertado
+            categoria.Nombre = dto.Nombre;
+            categoria.Descripcion = dto.Descripcion;
+            categoria.Icono = dto.Icono;
+            categoria.PrioridadSugerida = dto.PrioridadSugerida;
+            categoria.DiasVencimiento = dto.DiasVencimiento;
+            
+            //Guardo la actualizacion
+            await contexto.SaveChangesAsync();
+            return Results.NoContent();
+        }
+        else
+        { 
+            return Results.BadRequest("El nombre de la categoria ya esta en uso.");
+        }
     }
 
     public static async Task<IResult> PutStatusCategoria(int categoriaId, HelpdeskDbContext contexto, ActualizarEstadoCategoriaDto dto)

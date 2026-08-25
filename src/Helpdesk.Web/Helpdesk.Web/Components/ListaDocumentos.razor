@@ -17,34 +17,37 @@ else
 {
     <MudStack>
         @*Meto el placeholder para cargar archivos*@
-        @if (documentos.Length < MaxDocs)
+        @if (PuedeSubir)
         {
-            <MudFileUpload T="IBrowserFile"
-                        FilesChanged="UploadAsync"
-                        Accept=".pdf"
-                        MaxFileSize="@(10*1024*1024)"
-                        @ref="fileUpload">
-                            <CustomContent>
-                    <MudPaper Outlined="true" 
-                        Style="border-style: dashed; cursor: pointer; width:100px; height:100px; padding: 5px" 
-                        @onclick="@(() => context.OpenFilePickerAsync())"
-                        Class="d-flex flex-column align-content-center justify-content-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Style="color:#C1571F; font-size:20px" />
-                                    <MudText Style="font-size:15px; color:#948C7D">Adjuntar PDF</MudText>
-                                </MudPaper>
-                            </CustomContent>
-                    </MudFileUpload>
+            @if (documentos.Length < MaxDocs)
+            {
+                <MudFileUpload T="IBrowserFile"
+                            FilesChanged="UploadAsync"
+                            Accept=".pdf"
+                            MaxFileSize="@(10*1024*1024)"
+                            @ref="fileUpload">
+                                <CustomContent>
+                        <MudPaper Outlined="true"
+                            Style="border-style: dashed; cursor: pointer; width:100px; height:100px; padding: 5px"
+                            @onclick="@(() => context.OpenFilePickerAsync())"
+                            Class="d-flex flex-column align-content-center justify-content-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Style="color:#C1571F; font-size:20px" />
+                                        <MudText Style="font-size:15px; color:#948C7D">Adjuntar PDF</MudText>
+                                    </MudPaper>
+                                </CustomContent>
+                        </MudFileUpload>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">Alcanzaste el maximo de @MaxDocs documentos por ticket</MudAlert>
+            }
         }
-        else
-        {
-            <MudAlert Severity="Severity.Info">Alcanzaste el maximo de @MaxDocs documentos por ticket</MudAlert>
-        }
-
+        @*
         @if (documentos.Length == 0)
         {
             <MudText> Aun no hay adjuntos, puedes cargar uno aca mismo!</MudText>
         }
-
+        *@
         @foreach (var doc in documentos)
         {
             <div style="padding:10px 0; border-top:1px solid rgba(33,29,24,.06)">
@@ -75,6 +78,7 @@ else
 
 @code {
     [Parameter] public int TicketId { get; set; }
+    [Parameter] public bool PuedeSubir { get; set; }
     private AdjuntoResponseDto[]? documentos;
     private bool error;
     private MudFileUpload<IBrowserFile> fileUpload = default!;
