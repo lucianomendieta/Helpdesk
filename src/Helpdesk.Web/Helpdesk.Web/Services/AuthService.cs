@@ -1,6 +1,9 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json;
 
+using Helpdesk.Web.Dtos;
+using Helpdesk.Web.Extensions;
+
 namespace Helpdesk.Web.Services;
 
 public interface IAuthService
@@ -8,6 +11,7 @@ public interface IAuthService
     Task<string?> LoginAsync(string nombre, string password);
     Task LogoutAsync();
     Task<string?> GetTokenAsync();
+    Task<ResultadoApi> ChangePasswordAsync(CambiarPasswordDto dto);
 }
 
 public class AuthService (HttpClient http, ILocalStorageService storage, CustomAuthenticationStateProvider customAuthState) : IAuthService
@@ -43,4 +47,11 @@ public class AuthService (HttpClient http, ILocalStorageService storage, CustomA
 
     //Leo el token
     public async Task<string?> GetTokenAsync() { return  await storage.GetItemAsync("token"); }
+    
+    //Cambio la contraseña del usuario
+    public async Task<ResultadoApi> ChangePasswordAsync(CambiarPasswordDto dto)
+    {
+        var hasChanged = await http.PutAsJsonAsync("auth/login/changepwd", dto);
+        return hasChanged.IsSuccessStatusCode ? new ResultadoApi(true, null) : new ResultadoApi(false, await hasChanged.LeerErrorAsync());
+    }
 }

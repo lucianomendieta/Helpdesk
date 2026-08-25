@@ -201,6 +201,7 @@ public static class UsuariosEndpoints
         var hasher = new PasswordHasher<Usuario>();
         //Guardo la contraseña nueva
         usuario.PasswordHash = hasher.HashPassword(usuario, dto.NewPassword);
+        usuario.DebeCambiarCredenciales = true;
         await contexto.SaveChangesAsync();
         return Results.NoContent();
     }

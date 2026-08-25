@@ -72,14 +72,7 @@ public class UsuarioService (HttpClient http) : IUsuarioService
     public async Task<ResultadoApi> ResetPasswordUsuarioAsync(int id, ResetPasswordDto dto)
     {
         var hasChanged = await http.PutAsJsonAsync($"usuarios/{id}/password", dto);
-        if (hasChanged.IsSuccessStatusCode) 
-        {
-            return new ResultadoApi(true, null);
-        }
-        else
-        {
-            return new ResultadoApi(false, await hasChanged.LeerErrorAsync());
-        }
+        return hasChanged.IsSuccessStatusCode ? new ResultadoApi(true, null) : new ResultadoApi(false, await hasChanged.LeerErrorAsync());
     }
 
     public async Task<UsuarioDto[]> GetUsuariosAsignablesAsync()

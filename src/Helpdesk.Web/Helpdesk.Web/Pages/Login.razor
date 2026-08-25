@@ -1,10 +1,15 @@
 ﻿
 @page "/login"
+@using System.Reflection
 @using Helpdesk.Web.Services;
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor;
+@using System.Security.Claims;
 @inject IAuthService AuthService;
 @inject NavigationManager navigationManager;
 @inject MudBlazor.ISnackbar snackbar;
+@inject CustomAuthenticationStateProvider authstateProvider;
+@inject IDialogService dialogService;
 
 
 <div style="min-height: calc(100vh - 16vh);
@@ -99,7 +104,18 @@
             try
             {
                 await AuthService.LoginAsync(nombre, password);
-                navigationManager.NavigateTo("/");
+                var authState = await authstateProvider.GetAuthenticationStateAsync();
+                var claim = authState.User.FindFirst("debe_cambiar_credenciales")?.Value;
+                if (bool.TryParse(claim, out bool debeCambiarCredenciales) && debeCambiarCredenciales)
+                {
+                    var options = new DialogOptions{ CloseOnEscapeKey = false, MaxWidth=MaxWidth.Small, FullWidth=true, BackdropClick = false};
+                    var dialog = await dialogService.ShowAsync<CambiarPasswordDialog>("", options);
+                }
+                else
+                {
+                    navigationManager.NavigateTo("/");
+                }
+                
             } 
             catch
             {

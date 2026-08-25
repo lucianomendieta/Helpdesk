@@ -150,6 +150,7 @@ public static class AuthEndpoints
 
             case PasswordVerificationResult.SuccessRehashNeeded:
                 usuarioAModificar.PasswordHash = hasher.HashPassword(usuarioAModificar, dto.NewPassword);
+                usuarioAModificar.DebeCambiarCredenciales = false;
                 await contexto.SaveChangesAsync();
                 return Results.Ok(new { mensaje = $"Se ha modificado tu contraseña {usuarioAModificar.NombrePila}, favor iniciar sesion!"});
         }
