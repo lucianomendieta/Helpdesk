@@ -380,7 +380,7 @@ else @*VISTA DE CARDS/TARJETAS*@
 
     private async Task ShowUpdateDialogAsync(TicketDto ticketAEditar)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters<PutTicketDialog> { { x => x.ticket, ticketAEditar } };
         var dialog = await dialogService.ShowAsync<PutTicketDialog>("Editar ticket", parameters, options);
 

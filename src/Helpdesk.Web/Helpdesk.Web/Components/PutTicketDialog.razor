@@ -6,18 +6,30 @@
 
 <MudDialog>
     <TitleContent>
-        Editar Ticket
+        <MudText Style="font-size:18px; font-weight:700; color:#221F1A">Editar ticket</MudText>
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="IsValid">
-            <MudTextField T="string" Label="Titulo" @bind-Value="dto.Titulo" Required="true" RequiredError="Ingrese un titulo"></MudTextField>
-            <MudTextField T="string" Label="Descripcion" @bind-Value="dto.Descripcion" Required="true" RequiredError="Ingrese la descripcion del ticket"></MudTextField>
+            @*------Titulo------*@
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px; margin-top: 6px">Título</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding-left:14px; margin-bottom:16px">
+                <MudTextField T="string" @bind-Value="dto.Titulo" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                              Required="true" RequiredError="Ingrese un titulo"
+                              Style="font-size:13.5px; color:#221F1A"/>
+            </div>
+            @*---------Descipcion------------*@
+            <MudText Style="font-size:12.5px; font-weight:600; color:#221F1A; margin-bottom:6px">Descripción</MudText>
+            <div style="border:1.5px solid rgba(33,29,24,.12); border-radius:11px; padding:12px 14px; margin-bottom:16px">
+                <MudTextField T="string" @bind-Value="dto.Descripcion" Variant="Variant.Text" Underline="false" Margin="Margin.Dense"
+                              Lines="3" Required="true" RequiredError="Ingrese la descripcion del ticket"
+                              Style="font-size:13.5px; color:#221F1A" />
+            </div>
         </MudForm>
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton OnClick="Submit" Color="Color.Primary">Editar</MudButton>
+        <MudButton OnClick="Cancel" Style="font-size:13.5px; font-weight:600; color:#756F63; text-transform:none">Cancelar</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Style="border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:700; text-transform:none">Editar</MudButton>
     </DialogActions>
 </MudDialog>
 
