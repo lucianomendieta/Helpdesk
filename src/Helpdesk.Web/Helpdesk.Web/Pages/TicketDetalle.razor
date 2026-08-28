@@ -213,7 +213,7 @@ else
                             <div style="border:1.5px solid rgba(33,29,24,.1); border-radius:10px; display:flex; 
                             align-items:center; gap:8px; padding-left:10px">
                                 <MudAvatar Size="Size.Small">
-                                    @InicialHelper.InicialesHelper(AgenteActual?.NombrePila + " " + AgenteActual?.ApellidoPila)
+                                    @InicialHelper.InicialesHelper(ticket?.NombreAgente)
                                 </MudAvatar>
                                 <MudSelect T="int?" Variant="Variant.Text" Margin="Margin.Dense" Underline="false"
                                            Value="ticket!.AgenteAsignadoId" ValueChanged="AsignarAgenteAsync">
@@ -221,6 +221,10 @@ else
                                     @foreach (var agente in agentes ?? [])
                                     {
                                         <MudSelectItem T="int?" Value="@agente.Id">@agente.NombrePila @agente.ApellidoPila</MudSelectItem>
+                                    }
+                                    @if (ticket!.AgenteAsignadoId is not null && agentes is not null && agentes.All(a => a.Id != ticket.AgenteAsignadoId))
+                                    {
+                                        <MudSelectItem T="int?" Value="ticket.AgenteAsignadoId" Disabled="true">@ticket.NombreAgente (inactivo)</MudSelectItem>
                                     }
                                 </MudSelect>
                             </div>

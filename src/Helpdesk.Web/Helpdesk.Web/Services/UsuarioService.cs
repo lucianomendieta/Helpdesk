@@ -20,6 +20,7 @@ public interface IUsuarioService
     Task<ResultadoApi> UpdateUsuarioRolAsync(int id, ActualizarRolDto dto);
     Task<UsuarioDto?> GetMiPerfilAsync();
     Task<ResultadoApi> UpdateUsuarioEmailAsync(int id, CambiarEmailDto dto);
+    Task<ResultadoApi> UpdateUsuarioStateAsync(int id, ActualizarEstadoUsuarioDto dto);
 }
 
 public class UsuarioService (HttpClient http) : IUsuarioService
@@ -111,5 +112,19 @@ public class UsuarioService (HttpClient http) : IUsuarioService
     {
         var updated = await http.PutAsJsonAsync($"usuarios/{id}/email", dto);
         return updated.IsSuccessStatusCode ? new ResultadoApi(true, null) : new ResultadoApi(false, await updated.LeerErrorAsync());
+    }
+    
+    //Actualizo el estado de la persona
+    public async Task<ResultadoApi> UpdateUsuarioStateAsync(int id, ActualizarEstadoUsuarioDto dto)
+    {
+        var updated = await http.PutAsJsonAsync($"usuarios/{id}/status", dto);
+        if (updated.IsSuccessStatusCode)
+        {
+            return new ResultadoApi(true, null);
+        }
+        else
+        {
+            return new ResultadoApi(false, await updated.LeerErrorAsync());
+        }
     }
 }

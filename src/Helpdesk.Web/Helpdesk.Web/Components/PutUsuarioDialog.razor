@@ -95,6 +95,7 @@
     protected override void OnInitialized()
     {
         dto = new PutUsuarioDto { Nombre = usuario.Nombre, NombrePila = usuario.NombrePila, ApellidoPila = usuario.ApellidoPila };
+        email = usuario.Email;
     }
     private void Cancel() => MudDialog.Cancel();
 

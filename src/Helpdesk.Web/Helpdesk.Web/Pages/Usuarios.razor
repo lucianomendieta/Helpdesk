@@ -84,9 +84,9 @@
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                    Style="color:var(--mud-palette-primary)"
                                    OnClick="@(() => ShowUpdateDialogAsync(context))" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Style="color:var(--alerta-txt)"
-                                   OnClick="@(() => ShowDeleteDialogAsync(context.Id))" />
+                    <MudIconButton Icon="@(context.Estado == EstadoUsuario.Activo ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAddAlt1)"
+                                   Style="@(context.Estado == EstadoUsuario.Activo ? "color:var(--alerta-txt)" : "color:var(--estado-hecho-txt)")"
+                                   OnClick="@(() => ShowDeleteDialogAsync(context))" />
                 </MudTd>
             </RowTemplate>
             <PagerContent>
@@ -135,25 +135,43 @@
         }
     }
 
-    private async Task ShowDeleteDialogAsync(int id)
+    private async Task ShowDeleteDialogAsync(UsuarioDto usuario)
     {
-        bool? result = await dialogService.ShowMessageBoxAsync(
-            title: "Atención",
-            message: "¿Seguro que querés borrar el usuario?",
-            yesText: "Borrar",
-            cancelText: "Cancelar"
-        );
+        //Calculo el estado contrario al actual, antes de armar el dialogo (lo necesito en dos lugares)
+        var nuevoEstado = usuario.Estado == EstadoUsuario.Activo ? EstadoUsuario.Inactivo : EstadoUsuario.Activo;
+
+        //Declarado afuera del if/else para que sobreviva mas alla de esos bloques
+        bool? result;
+        if (usuario.Estado == EstadoUsuario.Activo)
+        {
+            result = await dialogService.ShowMessageBoxAsync(
+                title: "Inactivar usuario",
+                message: $"El usuario {usuario.Nombre} sera inactivado de sus funciones.",
+                yesText: "Confirmar",
+                cancelText: "Cancelar"
+            );
+        }
+        else
+        {
+            result = await dialogService.ShowMessageBoxAsync(
+                title: "Reactivar usuario",
+                message: $"El usuario {usuario.Nombre} volvera a estar dentro del sistema.",
+                yesText: "Confirmar",
+                cancelText: "Cancelar"
+            );
+        }
 
         if (result == true)
         {
-            var ok = await usuarioService.DeleteUsuarioAsync(id);
-            if (ok == true)
+            var actualizado = await usuarioService.UpdateUsuarioStateAsync(usuario.Id, new ActualizarEstadoUsuarioDto { EstadoUsuario = nuevoEstado });
+            if (actualizado.Exito)
             {
-                users = users?.Where(u => u.Id != id).ToArray();
+                //usuario es el MISMO objeto que esta dentro de "users", mutar alcanza
+                usuario.Estado = nuevoEstado;
             }
             else
             {
-                snackbar.Add("No se pudo eliminar el usuario", Severity.Error);
+                snackbar.Add(actualizado.Error ?? "No se pudo actualizar el estado del usuario", Severity.Error);
             }
         }
     }
